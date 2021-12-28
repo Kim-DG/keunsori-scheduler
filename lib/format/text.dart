@@ -6,7 +6,7 @@ class TextFormat extends StatelessWidget {
       this.text = '',
       this.wordSpacing = 0.0,
       this.color = Colors.white,
-      this.fontSize = 40.0, this.letterSpacing = 10.0, this.decoration})
+      this.fontSize = 40.0, this.letterSpacing = 10.0, this.decoration, this.height = 1.0})
       : super(key: key);
   final String text;
   final double wordSpacing;
@@ -14,6 +14,7 @@ class TextFormat extends StatelessWidget {
   final double fontSize;
   final double letterSpacing;
   final TextDecoration? decoration;
+  final double height;
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +25,8 @@ class TextFormat extends StatelessWidget {
           color: color,
           letterSpacing: letterSpacing,
           wordSpacing: wordSpacing,
-          decoration: decoration
+          decoration: decoration,
+          height: height
         ));
   }
 }

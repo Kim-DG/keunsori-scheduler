@@ -1,20 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:keunsori/format/button.dart';
 import 'package:keunsori/format/text.dart';
-import 'package:keunsori/concert_choice.dart';
-import 'package:keunsori/song_selection.dart';
+import 'package:keunsori/concert_choice/concert_choice.dart';
+import 'package:keunsori/song_selection/song_selection.dart';
 import 'package:keunsori/song_sequence.dart';
 import 'package:keunsori/voting.dart';
 import 'package:keunsori/practice_schedule/practice_schedule.dart';
+import 'package:keunsori/data_class/data_class.dart';
+import 'package:provider/provider.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ConcertId()),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({Key? key}) : super(key: key);
 
-  // This widget is the root of your application.
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -27,8 +40,19 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class MainPage extends StatelessWidget {
+class MainPage extends StatefulWidget {
   const MainPage({Key? key}) : super(key: key);
+
+  @override
+  State<MainPage> createState() => _MainPageState();
+}
+
+class _MainPageState extends State<MainPage> {
+
+  @override
+  void initState(){
+
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -135,6 +159,15 @@ class MainPage extends StatelessWidget {
               ),
             ],
           ),
+          Container(
+              alignment: Alignment.bottomRight,
+              margin: EdgeInsets.all(20.0),
+              child: TextFormat(
+                text: context.watch<ConcertId>().content,
+                color: Colors.white70,
+                fontSize: 20.0,
+                letterSpacing: 2.0,
+              ))
         ],
       ),
     );

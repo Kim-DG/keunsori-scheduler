@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:keunsori/format/text.dart';
 import 'package:keunsori/data_class/data_class.dart';
+import 'package:provider/provider.dart';
 
 class PracticeSchedule extends StatelessWidget {
   const PracticeSchedule({Key? key}) : super(key: key);
@@ -10,71 +11,76 @@ class PracticeSchedule extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(
-        children: [
-          const SizedBox(
-            width: double.infinity,
-            height: double.infinity,
-            child: Image(
-              image: AssetImage('assets/bg.gif'),
-              fit: BoxFit.cover,
+          children: [
+            const SizedBox(
+              width: double.infinity,
+              height: double.infinity,
+              child: Image(
+                image: AssetImage('assets/bg.gif'),
+                fit: BoxFit.cover,
+              ),
             ),
-          ),
-          Container(
-            margin: const EdgeInsets.all(25.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Stack(
-                  children: [
-                    const Opacity(
-                      opacity: 0.7,
-                      child: Image(
-                        image: AssetImage('assets/uppage.png'),
-                        fit: BoxFit.fill,
-                        width: double.maxFinite,
-                      ),
-                    ),
-                    Positioned(
-                      bottom: 10,
-                      top: 10,
-                      left: 10,
-                      right: 10,
-                      child: Container(
-                        alignment: Alignment.center,
-                        child: const TextFormat(
-                          text: '연습일정',
-                          color: Colors.black87,
-                          fontSize: 25.0,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                Stack(
-                  children: const [
-                    Opacity(
+            Container(
+              margin: const EdgeInsets.all(25.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Stack(
+                    children: [
+                      const Opacity(
                         opacity: 0.7,
                         child: Image(
-                          width: double.infinity,
-                          image: AssetImage('assets/downpage.png'),
+                          image: AssetImage('assets/uppage.png'),
                           fit: BoxFit.fill,
-                        )),
-                    Positioned(
+                          width: double.maxFinite,
+                        ),
+                      ),
+                      Positioned(
                         bottom: 10,
                         top: 10,
                         left: 10,
                         right: 10,
-                        child: Calendar()),
-                  ],
-                ),
-              ],
+                        child: Container(
+                          alignment: Alignment.center,
+                          child: const TextFormat(
+                            text: '연습일정',
+                            color: Colors.black87,
+                            fontSize: 25.0,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  Stack(
+                    children: const [
+                      Opacity(
+                          opacity: 0.7,
+                          child: Image(
+                            width: double.infinity,
+                            image: AssetImage('assets/downpage.png'),
+                            fit: BoxFit.fill,
+                          )),
+                      Positioned(
+                          bottom: 10,
+                          top: 10,
+                          left: 10,
+                          right: 10,
+                          child: Calendar()),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
-      ),
+          ],
+        ),
     );
   }
 }
+
+
+
+
+
 
 class Calendar extends StatefulWidget {
   const Calendar({Key? key}) : super(key: key);
@@ -85,21 +91,17 @@ class Calendar extends StatefulWidget {
 
 class _CalendarState extends State<Calendar> {
   DateTime selectedDate = DateTime.now(); // TO tracking date
-  DateTime start = DateTime(
-    2022,
-    1,
-    1,
-  );
+  late DateTime start;
   int currentDateSelectedIndex = 0; //For Horizontal Date
   ScrollController scrollController =
       ScrollController(); //To Track Scroll of ListView
 
-  Schedule ex = Schedule("2022-01-02", "asfasf");
+  late Schedule ex;
 
   final textEditController = TextEditingController();
   String addContent = '';
   String tapDate = '';
-  Schedule addSchedule = Schedule('date', 'content');
+  late Schedule addSchedule;
 
   List<Schedule> listSchedule = [];
   List<Schedule> filterSchedule = [];
@@ -120,16 +122,95 @@ class _CalendarState extends State<Calendar> {
   ];
   List<String> listOfDays = ["月", "火", "水", "木", "金", "土", "日"];
 
-
-  void addDialog() {
+  void deleteDialog(Schedule schedule) {
     showDialog(
+        barrierDismissible: false,
+        context: context,
+        builder: (context) {
+          return Opacity(
+            opacity: 0.7,
+            child: Dialog(
+                elevation: 0,
+                backgroundColor: Colors.transparent,
+                child: Container(
+                  height: 200,
+                  decoration: const BoxDecoration(
+                      image: DecorationImage(
+                          image: AssetImage('assets/short_dialog.png'),
+                          fit: BoxFit.fill)),
+                  child: Stack(
+                    children: [
+                      Container(
+                        alignment: Alignment.topRight,
+                        child: TextButton(
+                          onPressed: () {
+                            return Navigator.of(context).pop();
+                          },
+                          child: const Image(
+                            image: AssetImage('assets/exit.png'),
+                            width: 30,
+                            height: 30,
+                          ),
+                        ),
+                      ),
+                      Container(
+                          alignment: Alignment.center,
+                          child: const TextFormat(
+                            text: '삭제하시겠습니까?',
+                            letterSpacing: 2.0,
+                            fontSize: 20.0,
+                            color: Colors.black87,
+                            height: 1.5,
+                          )),
+                      Container(
+                        alignment: Alignment.bottomCenter,
+                        margin: EdgeInsets.only(bottom: 10.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            TextButton(
+                                onPressed: () {
+                                  setState(() {
+                                    listSchedule.removeWhere((element) =>
+                                    element == schedule);
+                                    filterSchedule.removeWhere((
+                                        element) => element == schedule);
+                                    return Navigator.of(context).pop();
+                                  });
+                                },
+                                child: const TextFormat(
+                                  text: '네',
+                                  color: Colors.black87,
+                                  fontSize: 12.0,
+                                )),
+                            TextButton(
+                                onPressed: () {
+                                  return Navigator.of(context).pop();
+                                },
+                                child: const TextFormat(
+                                  text: '아니오',
+                                  color: Colors.black87,
+                                  letterSpacing: 2.0,
+                                  fontSize: 12.0,
+                                )),
+                          ],
+                        ),
+                      )
+                    ],
+                  ),
+                )),
+          );
+        });
+  }
+
+  void addScheduleDialog() {
+    showDialog(
+        barrierDismissible: false,
         context: context,
         builder: (BuildContext context) {
           return Opacity(
             opacity: 0.7,
             child: Dialog(
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16)),
               elevation: 0,
               backgroundColor: Colors.transparent,
               child: _buildChild(context),
@@ -165,7 +246,7 @@ class _CalendarState extends State<Calendar> {
               height: double.infinity,
               margin: const EdgeInsets.fromLTRB(20, 40, 20, 40),
               child: const Image(
-                image: AssetImage('assets/textfield.png'),
+                image: AssetImage('assets/text_field.png'),
                 fit: BoxFit.fitWidth,
                 alignment: Alignment.center,
               ),
@@ -206,8 +287,9 @@ class _CalendarState extends State<Calendar> {
               child: TextButton(
                 onPressed: () {
                   setState(() {
-                    addSchedule = Schedule(tapDate, addContent);
+                    addSchedule = Schedule(context.read<ConcertId>().id, tapDate, addContent);
                     listSchedule.add(addSchedule);
+                    print(listSchedule);
                     filterSchedule = listSchedule
                         .where((element) => element.date == tapDate)
                         .toList();
@@ -229,7 +311,10 @@ class _CalendarState extends State<Calendar> {
   @override
   void initState() {
     super.initState();
+    Schedule ex = Schedule(1,"2022-01-02", "asfasf");
     listSchedule.add(ex);
+    List<String> listDate = context.read<ConcertId>().date.split('-');
+    start = DateTime(int.parse(listDate[0]),int.parse(listDate[1]),int.parse(listDate[2]));
     tapDate = start.toString().split(' ')[0];
   }
 
@@ -261,7 +346,7 @@ class _CalendarState extends State<Calendar> {
                             .split(' ')[0];
                         currentDateSelectedIndex = index;
                         filterSchedule = listSchedule
-                            .where((element) => element.date == tapDate)
+                            .where((element) => element.date == tapDate && element.concertId == context.read<ConcertId>().id)
                             .toList();
                         print(tapDate);
                         print(filterSchedule);
@@ -311,7 +396,7 @@ class _CalendarState extends State<Calendar> {
                               color: currentDateSelectedIndex == index
                                   ? Colors.white
                                   : Colors.black87,
-                              fontSize: 14,
+                              fontSize: 12,
                               letterSpacing: 0,
                             ),
                           ],
@@ -340,23 +425,17 @@ class _CalendarState extends State<Calendar> {
                             print(detail.primaryDelta);
                             if(filterSchedule.isNotEmpty) {
                               Schedule deleteSchedule = filterSchedule[index];
-                              setState(() {
-                                listSchedule.removeWhere((element) =>
-                                element == deleteSchedule);
-                                filterSchedule.removeWhere((
-                                    element) => element == deleteSchedule);
-                              });
+                              deleteDialog(deleteSchedule);
                             }
                           }
                         },
                         child: Container(
-                          color: Colors.white,
                           margin: const EdgeInsets.all(10.0),
                           alignment: Alignment.center,
                           child: TextFormat(
                             text: filterSchedule[index].content,
                             color: Colors.black87,
-                            fontSize: 30.0,
+                            fontSize: 24.0,
                             letterSpacing: 2,
                           ),
                         ),
@@ -366,11 +445,12 @@ class _CalendarState extends State<Calendar> {
                 ),
                 Container(
                   alignment: Alignment.bottomRight,
+                  margin: const EdgeInsets.only(bottom: 5.0),
                   child: Opacity(
                     opacity: 0.7,
                     child: TextButton(
                       onPressed: () {
-                        addDialog();
+                        addScheduleDialog();
                       },
                       child: const Image(
                         image: AssetImage('assets/plus.png'),
@@ -381,9 +461,6 @@ class _CalendarState extends State<Calendar> {
                   ),
                 ),
               ])),
-          const SizedBox(
-            height: 20,
-          ),
         ],
       ),
     ));
