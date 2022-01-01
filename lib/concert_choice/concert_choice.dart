@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:keunsori/data_class/data_class.dart';
@@ -80,10 +82,6 @@ class ConcertChoice extends StatelessWidget {
 }
 
 
-
-
-
-
 class ConcertList extends StatefulWidget {
   const ConcertList({Key? key}) : super(key: key);
 
@@ -92,23 +90,79 @@ class ConcertList extends StatefulWidget {
 }
 
 class _ConcertListState extends State<ConcertList> {
-  ScrollController scrollController = ScrollController();
+  final ScrollController scrollController = ScrollController();
   final textEditController = TextEditingController();
   late DateTime selectedDate;
-  String date = DateTime.now().toString().split(' ')[0];
-  String addConcert = '';
+  late String date;
 
   List<ApiConcert> listConcert = [];
+
+  late Future<ResultGet> resultConcert;
+
+  Future<ResultGet> _getConcert() async{
+    String url = 'http://10.0.3.2:3000/concerts';
+    final response = await http
+        .get(Uri.parse(url));
+    if (response.statusCode == 200) {
+      // If the server did return a 200 OK response,
+      // then parse the JSON.
+      return ResultGet.fromJson(jsonDecode(response.body));
+    } else {
+      // If the server did not return a 200 OK response,
+      // then throw an exception.
+      throw Exception('Failed to load concert');
+    }
+  }
+
+  Future<ResultPost>_postConcert(Concert concert) async{
+    String url = 'http://10.0.3.2:3000/concerts';
+    String json = jsonEncode(concert);
+    http.Response response = await http.post(Uri.parse(url), headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+    }, body: json);
+    if (response.statusCode == 201) {
+      // If the server did return a 200 OK response,
+      // then parse the JSON.
+      print(response.body);
+      return ResultPost.fromJson(jsonDecode(response.body));
+    } else {
+      // If the server did not return a 200 OK response,
+      // then throw an exception.
+      throw Exception('Failed to load concert');
+    }
+  }
+
+  Future<Result>_deleteConcert(int id) async{
+    String url = 'http://10.0.3.2:3000/concerts/$id';
+    http.Response response = await http.delete(Uri.parse(url), headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+    });
+    if (response.statusCode == 200) {
+      // If the server did return a 200 OK response,
+      // then parse the JSON.
+      print(response.body);
+      return Result.fromJson(jsonDecode(response.body));
+    } else {
+      // If the server did not return a 200 OK response,
+      // then throw an exception.
+      throw Exception('Failed to load concert');
+    }
+  }
 
   @override
   void initState() {
     super.initState();
+    date = DateTime.now().toString().split(' ')[0];
+    listConcert.clear();
 
-
-    ApiConcert ex = ApiConcert(1,date,"fff");
-    ApiConcert ex2 = ApiConcert(2,date,"ddd");
-    listConcert.add(ex);
-    listConcert.add(ex2);
+    resultConcert = _getConcert();
+    resultConcert.then((data){
+      if(data.result.isNotEmpty) {
+        for (var element in data.result) {
+          listConcert.insert(0,ApiConcert.fromJson(element));
+        }
+      }
+    });
   }
 
   void deleteDialog(ApiConcert concert) {
@@ -153,7 +207,7 @@ class _ConcertListState extends State<ConcertList> {
                           )),
                       Container(
                         alignment: Alignment.bottomCenter,
-                        margin: EdgeInsets.only(bottom: 10.0),
+                        margin: const EdgeInsets.only(bottom: 10.0),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -162,6 +216,7 @@ class _ConcertListState extends State<ConcertList> {
                                   setState(() {
                                     listConcert.removeWhere((element) =>
                                     element == concert);
+                                    _deleteConcert(concert.id);
                                     return Navigator.of(context).pop();
                                   });
                                 },
@@ -238,34 +293,26 @@ class _ConcertListState extends State<ConcertList> {
             alignment: Alignment.center,
           ),
         ),
-        SizedBox(
-          width: double.infinity,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(40, 0, 40, 0),
-                child: TextField(
-                  controller: textEditController,
-                  decoration: const InputDecoration(
-                    border: InputBorder.none,
-                    enabledBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: Colors.black54),
-                    ),
-                    focusedBorder: InputBorder.none,
-                  ),
-                  autofocus: true,
-                  style: const TextStyle(
-                      color: Colors.black87, fontSize: 18, fontFamily: 'A'),
-                  cursorColor: Colors.black54,
-                  onChanged: (text) {
-                    setState(() {
-                      addConcert = text;
-                    });
-                  },
+        Center(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(40, 0, 40, 0),
+            child: TextField(
+              controller: textEditController,
+              decoration: const InputDecoration(
+                border: InputBorder.none,
+                enabledBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.black54),
                 ),
-              )
-            ],
+                focusedBorder: InputBorder.none,
+              ),
+              autofocus: true,
+              style: const TextStyle(
+                  color: Colors.black87, fontSize: 18, fontFamily: 'A'),
+              cursorColor: Colors.black54,
+              onChanged: (text) {
+                setState(() {});
+              },
+            ),
           ),
         ),
         Container(
@@ -274,10 +321,14 @@ class _ConcertListState extends State<ConcertList> {
           child: TextButton(
             onPressed: () {
               setState(() {
-                listConcert.add(ApiConcert(5,date,addConcert));
-                print(listConcert[0].date);
-                textEditController.text = '';
-                return Navigator.of(context).pop();
+                Concert concert = Concert(date,textEditController.text);
+                Future<ResultPost> result = _postConcert(concert);
+                result.then((data){
+                  listConcert.insert(0,ApiConcert(data.result, date, textEditController.text));
+                  textEditController.text = '';
+                  return Navigator.of(context).pop();
+                });
+
               });
             },
             child: const Image(
@@ -296,49 +347,64 @@ class _ConcertListState extends State<ConcertList> {
     return SafeArea(
         child: Scaffold(
       backgroundColor: Colors.transparent,
-          body: Stack(children: [
-              Opacity(
-                opacity: 0.7,
-                child: ListView.builder(
-                  controller: scrollController,
-                  scrollDirection: Axis.vertical,
-                  itemCount: listConcert.length,
-                  itemBuilder: (BuildContext context, int index) {
-                    return GestureDetector(
-                      onHorizontalDragUpdate: (detail) {
-                        if(detail.primaryDelta! > 7.0) {
-                          print(detail.primaryDelta);
-                          if(listConcert.isNotEmpty) {
-                            ApiConcert deleteConcert = listConcert[index];
-                            deleteDialog(deleteConcert);
-                          }
-                        }
-                      },
-                      onTap: (){  // 클릭 시 해당 공연을 선택하여 정보를 볼 수 있음
-                        setState(() {
-                          context.read<ConcertId>().set(listConcert[index].id, listConcert[index].concertName, listConcert[index].date);
-                        });
-                        return Navigator.of(context).pop();
-                      },
-                      child: Container(
-                        margin: const EdgeInsets.all(10.0),
-                        alignment: Alignment.center,
-                        child: TextFormat(
-                          text: listConcert[index].concertName,
+          body: Opacity(
+            opacity: 0.7,
+            child: Column(children: [
+                Expanded(
+                  flex: 1,
+                  child: FutureBuilder<ResultGet>(
+                    future: resultConcert,
+                    builder: (context,snapshot) {
+                      if(snapshot.hasData){
+                      return ListView.builder(
+                        controller: scrollController,
+                        scrollDirection: Axis.vertical,
+                        itemCount: listConcert.length,
+                        itemBuilder: (BuildContext context, int index) {
+                          return GestureDetector(
+                            onHorizontalDragUpdate: (detail) {
+                              if(detail.primaryDelta! > 7.0) {
+                                print(detail.primaryDelta);
+                                if(listConcert.isNotEmpty) {
+                                  ApiConcert deleteConcert = listConcert[index];
+                                  deleteDialog(deleteConcert);
+                                }
+                              }
+                            },
+                            onTap: (){  // 클릭 시 해당 공연을 선택하여 정보를 볼 수 있음
+                              setState(() {
+                                context.read<ConcertId>().set(listConcert[index].id, listConcert[index].concertName, listConcert[index].date);
+                              });
+                              return Navigator.of(context).pop();
+                            },
+                            child: Container(
+                              margin: const EdgeInsets.all(10.0),
+                              alignment: Alignment.center,
+                              child: TextFormat(
+                                text: listConcert[index].concertName,
+                                color: Colors.black87,
+                                fontSize: 30.0,
+                                letterSpacing: 2,
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                      } else if (snapshot.hasError){
+                        return const TextFormat(
+                          text: "오류가 발생했습니다!",
                           color: Colors.black87,
-                          fontSize: 30.0,
+                          fontSize: 15.0,
                           letterSpacing: 2,
-                        ),
-                      ),
-                    );
-                  },
+                        );
+                      }
+                      return Container();
+                    }
+                  ),
                 ),
-              ),
-              Container(
-                alignment: Alignment.bottomRight,
-                margin: const EdgeInsets.only(bottom: 5.0),
-                child: Opacity(
-                  opacity: 0.7,
+                Container(
+                  alignment: Alignment.bottomRight,
+                  margin: const EdgeInsets.only(bottom: 5.0),
                   child: TextButton(
                     onPressed: () {
                       addConcertDialog();
@@ -350,8 +416,8 @@ class _ConcertListState extends State<ConcertList> {
                     ),
                   ),
                 ),
-              ),
-            ]),
+              ]),
+          ),
           ),
     );
   }

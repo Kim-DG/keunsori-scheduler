@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:keunsori/format/text.dart';
@@ -91,21 +93,17 @@ class Calendar extends StatefulWidget {
 }
 
 class _CalendarState extends State<Calendar> {
-  DateTime selectedDate = DateTime.now(); // TO tracking date
-  late DateTime start;
-  int currentDateSelectedIndex = 0; //For Horizontal Date
-  ScrollController scrollController =
+  late final DateTime start;
+  final ScrollController scrollController =
       ScrollController(); //To Track Scroll of ListView
-
-  late Schedule ex;
-
   final textEditController = TextEditingController();
-  String addContent = '';
-  String tapDate = '';
-  late Schedule addSchedule;
+  late int concertId;
+  late Future<ResultGet> resultSchedule;
 
-  List<Schedule> listSchedule = [];
-  List<Schedule> filterSchedule = [];
+  String tapDate = '';
+  int currentDateSelectedIndex = 0; //For Ho
+  List<ApiSchedule> listSchedule = [];
+  List<ApiSchedule> filterSchedule = [];
 
   List<String> listOfMonths = [
     "1月",
@@ -123,7 +121,75 @@ class _CalendarState extends State<Calendar> {
   ];
   List<String> listOfDays = ["月", "火", "水", "木", "金", "土", "日"];
 
-  void deleteDialog(Schedule schedule) {
+  Future<ResultGet> _getSchedule(int concertId) async{
+    String url = 'http://10.0.3.2:3000/schedules/$concertId';
+    final response = await http
+        .get(Uri.parse(url));
+    if (response.statusCode == 200) {
+      // If the server did return a 200 OK response,
+      // then parse the JSON.
+      print(response.body);
+      return ResultGet.fromJson(jsonDecode(response.body));
+    } else {
+      // If the server did not return a 200 OK response,
+      // then throw an exception.
+      throw Exception('Failed to load concert');
+    }
+  }
+
+  Future<ResultPost> _postSchedule(Schedule schedule) async{
+    String url = 'http://10.0.3.2:3000/schedules';
+    String json = jsonEncode(schedule);
+    http.Response response = await http.post(Uri.parse(url), headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+    }, body: json);
+    if (response.statusCode == 201) {
+      // If the server did return a 200 OK response,
+      // then parse the JSON.
+      print(response.body);
+      return ResultPost.fromJson(jsonDecode(response.body));
+    } else {
+      // If the server did not return a 200 OK response,
+      // then throw an exception.
+      throw Exception('Failed to load concert');
+    }
+  }
+
+  Future<Result>_deleteSchedule(int id) async{
+    String url = 'http://10.0.3.2:3000/schedules/$id';
+    http.Response response = await http.delete(Uri.parse(url), headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+    });
+    if (response.statusCode == 200) {
+      // If the server did return a 200 OK response,
+      // then parse the JSON.
+      print(response.body);
+      return Result.fromJson(jsonDecode(response.body));
+    } else {
+      // If the server did not return a 200 OK response,
+      // then throw an exception.
+      throw Exception('Failed to load concert');
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    List<String> listDate = context.read<ConcertId>().date.split('-');
+    start = DateTime(int.parse(listDate[0]),int.parse(listDate[1]),int.parse(listDate[2]));
+    tapDate = start.toString().split(' ')[0];
+    concertId = context.read<ConcertId>().id;
+    resultSchedule = _getSchedule(concertId);
+    resultSchedule.then((data){
+      if(data.result.isNotEmpty) {
+        for (var element in data.result) {
+          listSchedule.add(ApiSchedule.fromJson(element));
+        }
+      }
+    });
+  }
+
+  void deleteDialog(ApiSchedule schedule) {
     showDialog(
         barrierDismissible: false,
         context: context,
@@ -172,6 +238,7 @@ class _CalendarState extends State<Calendar> {
                             TextButton(
                                 onPressed: () {
                                   setState(() {
+                                    _deleteSchedule(schedule.id);
                                     listSchedule.removeWhere((element) =>
                                     element == schedule);
                                     filterSchedule.removeWhere((
@@ -274,7 +341,6 @@ class _CalendarState extends State<Calendar> {
                       cursorColor: Colors.black54,
                       onChanged: (text) {
                         setState(() {
-                          addContent = text;
                         });
                       },
                     ),
@@ -288,14 +354,17 @@ class _CalendarState extends State<Calendar> {
               child: TextButton(
                 onPressed: () {
                   setState(() {
-                    addSchedule = Schedule(context.read<ConcertId>().id, tapDate, addContent);
-                    listSchedule.add(addSchedule);
-                    print(listSchedule);
-                    filterSchedule = listSchedule
-                        .where((element) => element.date == tapDate)
-                        .toList();
-                    textEditController.text = '';
-                    return Navigator.of(context).pop();
+                    Schedule schedule = Schedule(concertId,tapDate,textEditController.text);
+                    Future<ResultPost> result = _postSchedule(schedule);
+                    result.then((data){
+                      listSchedule.add(ApiSchedule(data.result,concertId, tapDate, textEditController.text));
+                      textEditController.text = '';
+                      print(listSchedule);
+                      filterSchedule = listSchedule
+                          .where((element) => element.date == tapDate)
+                          .toList();
+                      return Navigator.of(context).pop();
+                    });
                   });
                 },
                 child: const Image(
@@ -308,16 +377,6 @@ class _CalendarState extends State<Calendar> {
           ],
         ),
       );
-
-  @override
-  void initState() {
-    super.initState();
-    Schedule ex = Schedule(1,"2022-01-02", "asfasf");
-    listSchedule.add(ex);
-    List<String> listDate = context.read<ConcertId>().date.split('-');
-    start = DateTime(int.parse(listDate[0]),int.parse(listDate[1]),int.parse(listDate[2]));
-    tapDate = start.toString().split(' ')[0];
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -347,7 +406,7 @@ class _CalendarState extends State<Calendar> {
                             .split(' ')[0];
                         currentDateSelectedIndex = index;
                         filterSchedule = listSchedule
-                            .where((element) => element.date == tapDate && element.concertId == context.read<ConcertId>().id)
+                            .where((element) => element.date == tapDate && element.concertId == concertId)
                             .toList();
                         print(tapDate);
                         print(filterSchedule);
@@ -386,8 +445,7 @@ class _CalendarState extends State<Calendar> {
                             TextFormat(
                               text: listOfMonths[start
                                               .add(Duration(days: index))
-                                              .month -
-                                          1]
+                                              .month - 1]
                                       .toString() +
                                   start
                                       .add(Duration(days: index))
@@ -410,45 +468,60 @@ class _CalendarState extends State<Calendar> {
           const SizedBox(
             height: 20,
           ),
-          Flexible(
-              fit: FlexFit.tight,
-              child: Stack(children: [
-                Opacity(
-                  opacity: 0.7,
-                  child: ListView.builder(
-                    controller: scrollController,
-                    scrollDirection: Axis.vertical,
-                    itemCount: filterSchedule.length,
-                    itemBuilder: (BuildContext context, int index) {
-                      return GestureDetector(
-                        onHorizontalDragUpdate: (detail) {
-                          if(detail.primaryDelta! > 7.0) {
-                            print(detail.primaryDelta);
-                            if(filterSchedule.isNotEmpty) {
-                              Schedule deleteSchedule = filterSchedule[index];
-                              deleteDialog(deleteSchedule);
-                            }
-                          }
+          Expanded(
+              flex: 1,
+              child: Opacity(
+                opacity: 0.7,
+                child: Column(children: [
+                  Expanded(
+                    flex: 1,
+                    child: FutureBuilder(
+                      future: resultSchedule,
+                      builder: (context, snapshot){
+    if(snapshot.hasData){
+                      return ListView.builder(
+                        controller: scrollController,
+                        scrollDirection: Axis.vertical,
+                        itemCount: filterSchedule.length,
+                        itemBuilder: (BuildContext context, int index) {
+                          return GestureDetector(
+                            onHorizontalDragUpdate: (detail) {
+                              if(detail.primaryDelta! > 7.0) {
+                                print(detail.primaryDelta);
+                                if(filterSchedule.isNotEmpty) {
+                                  ApiSchedule deleteSchedule = filterSchedule[index];
+                                  deleteDialog(deleteSchedule);
+                                }
+                              }
+                            },
+                            child: Container(
+                              margin: const EdgeInsets.all(10.0),
+                              alignment: Alignment.center,
+                              child: TextFormat(
+                                text: filterSchedule[index].content,
+                                color: Colors.black87,
+                                fontSize: 24.0,
+                                letterSpacing: 2,
+                              ),
+                            ),
+                          );
                         },
-                        child: Container(
-                          margin: const EdgeInsets.all(10.0),
-                          alignment: Alignment.center,
-                          child: TextFormat(
-                            text: filterSchedule[index].content,
-                            color: Colors.black87,
-                            fontSize: 24.0,
-                            letterSpacing: 2,
-                          ),
-                        ),
                       );
-                    },
+    } else if (snapshot.hasError){
+      return const TextFormat(
+        text: "오류가 발생했습니다!",
+        color: Colors.black87,
+        fontSize: 15.0,
+        letterSpacing: 2,
+      );
+    }
+    return Container();
+                      },
+                    ),
                   ),
-                ),
-                Container(
-                  alignment: Alignment.bottomRight,
-                  margin: const EdgeInsets.only(bottom: 5.0),
-                  child: Opacity(
-                    opacity: 0.7,
+                  Container(
+                    alignment: Alignment.bottomRight,
+                    margin: const EdgeInsets.only(bottom: 5.0),
                     child: TextButton(
                       onPressed: () {
                         addScheduleDialog();
@@ -460,8 +533,8 @@ class _CalendarState extends State<Calendar> {
                       ),
                     ),
                   ),
-                ),
-              ])),
+                ]),
+              )),
         ],
       ),
     ));

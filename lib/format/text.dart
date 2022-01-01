@@ -26,7 +26,7 @@ class TextFormat extends StatelessWidget {
           letterSpacing: letterSpacing,
           wordSpacing: wordSpacing,
           decoration: decoration,
-          height: height
+          height: height,
         ));
   }
 }

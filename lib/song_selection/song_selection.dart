@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:keunsori/data_class/data_class.dart';
@@ -93,8 +95,11 @@ class _AddSongState extends State<AddSong> {
   final remarksTextEditController = TextEditingController();
   final linkTextEditController = TextEditingController();
 
+  late int concertId;
+  late Future<ResultGet> resultSongInfo;
+
   //api로 변경예정
-  List<SongInfo> listSongInfo = [];
+  List<ApiSongInfo> listSongInfo = [];
   List<int> listDifficulty = [0,0,0,0,0,0,0,0,0];
 
   Map mapDifficulty = {
@@ -113,6 +118,108 @@ class _AddSongState extends State<AddSong> {
 
   bool? _checkBoxValueScore = false;
 
+  Future<ResultGet> _getSongInfo() async{
+    String url = 'http://10.0.3.2:3000/songs/$concertId';
+    final response = await http
+        .get(Uri.parse(url));
+    if (response.statusCode == 200) {
+      // If the server did return a 200 OK response,
+      // then parse the JSON.
+      return ResultGet.fromJson(jsonDecode(response.body));
+    } else {
+      // If the server did not return a 200 OK response,
+      // then throw an exception.
+      throw Exception('Failed to load concert');
+    }
+  }
+
+  Future<ResultPost>_postSongInfo(SongInfo songInfo) async{
+    String url = 'http://10.0.3.2:3000/songs';
+    String json = jsonEncode(songInfo);
+    http.Response response = await http.post(Uri.parse(url), headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+    }, body: json);
+    if (response.statusCode == 201) {
+      // If the server did return a 200 OK response,
+      // then parse the JSON.
+      print(response.body);
+      return ResultPost.fromJson(jsonDecode(response.body));
+    } else {
+      // If the server did not return a 200 OK response,
+      // then throw an exception.
+      throw Exception('Failed to load concert');
+    }
+  }
+
+  Future<Result>_deleteSongInfo(int id) async{
+    String url = 'http://10.0.3.2:3000/songs/$id';
+    http.Response response = await http.delete(Uri.parse(url), headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+    });
+    if (response.statusCode == 200) {
+      // If the server did return a 200 OK response,
+      // then parse the JSON.
+      print(response.body);
+      return Result.fromJson(jsonDecode(response.body));
+    } else {
+      // If the server did not return a 200 OK response,
+      // then throw an exception.
+      throw Exception('Failed to load concert');
+    }
+  }
+
+  Future<Result>_putSongInfo(int id, SongInfo songInfo) async{
+    String url = 'http://10.0.3.2:3000/songs/$id';
+    String json = jsonEncode(songInfo);
+    http.Response response = await http.put(Uri.parse(url), headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+    },body: json);
+    if (response.statusCode == 200) {
+      // If the server did return a 200 OK response,
+      // then parse the JSON.
+      print(response.body);
+      return Result.fromJson(jsonDecode(response.body));
+    } else {
+      // If the server did not return a 200 OK response,
+      // then throw an exception.
+      throw Exception('Failed to load concert');
+    }
+  }
+
+  Future<ResultPost>_postSelectedSongInfo(SelectedSongInfo songInfo) async{
+    String url = 'http://10.0.3.2:3000/selected-songs';
+    String json = jsonEncode(songInfo);
+    http.Response response = await http.post(Uri.parse(url), headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+    }, body: json);
+    if (response.statusCode == 201) {
+      // If the server did return a 200 OK response,
+      // then parse the JSON.
+      print(response.body);
+      return ResultPost.fromJson(jsonDecode(response.body));
+    } else {
+      // If the server did not return a 200 OK response,
+      // then throw an exception.
+      throw Exception('Failed to load concert');
+    }
+  }
+
+  @override
+  void initState(){
+    super.initState();
+    concertId = context.read<ConcertId>().id;
+    resultSongInfo = _getSongInfo();
+
+    resultSongInfo.then((data){
+      print(data.result.runtimeType);
+      if(data.result.isNotEmpty) {
+        for (var element in data.result) {
+          listSongInfo.add(ApiSongInfo.fromJson(element));
+        }
+      }
+    });
+  }
+
   initTextEdit(){
     selectorNameTextEditController.text = '';
     singerNameTextEditController.text = '';
@@ -121,7 +228,7 @@ class _AddSongState extends State<AddSong> {
     linkTextEditController.text = '';
   }
 
-  void infoDialog(SongInfo songInfo, int index) {
+  void infoDialog(ApiSongInfo songInfo, int index) {
     List<int> cloneDifficulty= [...songInfo.difficulty];
     bool cloneScore = songInfo.score;
     showDialog(
@@ -559,7 +666,7 @@ class _AddSongState extends State<AddSong> {
                                 child: Checkbox(
                                   activeColor: Colors.white,
                                   checkColor: Colors.grey,
-                                  value: songInfo.score,
+                                  value: cloneScore,
                                   onChanged: (value) {
                                     setDialogState(() {
                                       cloneScore = value!;
@@ -648,18 +755,42 @@ class _AddSongState extends State<AddSong> {
                         child: TextButton(
                           onPressed: () {
                             setState(() {
-                              SongInfo editSong = SongInfo(
-                                  context.read<ConcertId>().id,
-                                  selectorNameTextEditController.text,
+                              SongInfo editSongInfo = SongInfo(
+                                  concertId,
+                                  songInfo.selectorName,
                                   singerNameTextEditController.text,
                                   songNameTextEditController.text,
                                   remarksTextEditController.text,
                                   linkTextEditController.text,
                                   cloneDifficulty,
                                   cloneScore);
-                                listSongInfo[index] = editSong;
-                                //api song info
-                                return Navigator.of(context).pop(initTextEdit());
+                              _putSongInfo(songInfo.id, editSongInfo);
+                              String singerName = singerNameTextEditController.text;
+                              String songName = songNameTextEditController.text;
+                              String remarks = remarksTextEditController.text ;
+                              String link = linkTextEditController.text;
+
+                              if(singerNameTextEditController.text == ''){
+                                singerName = songInfo.singerName;
+                              }
+                              if(songNameTextEditController.text == ''){
+                                songName = songInfo.songName;
+                              }
+                              if(remarksTextEditController.text == ''){
+                                remarks = songInfo.remarks!;
+                              }
+                              if(linkTextEditController.text == ''){
+                                link = songInfo.link!;
+                              }
+
+                              listSongInfo[index] = ApiSongInfo(songInfo.id, concertId,songInfo.selectorName,
+                                  singerName,
+                                  songName,
+                                  remarks,
+                                  link,
+                                  cloneDifficulty,
+                                  cloneScore);
+                              return Navigator.of(context).pop(initTextEdit());
                             });
                           },
                           child: const Image(
@@ -678,7 +809,7 @@ class _AddSongState extends State<AddSong> {
         });
   }
 
-  void deleteDialog(SongInfo songInfo) {
+  void deleteDialog(ApiSongInfo songInfo) {
     showDialog(
         barrierDismissible: false,
         context: context,
@@ -728,7 +859,7 @@ class _AddSongState extends State<AddSong> {
                             TextButton(
                                 onPressed: () {
                                   setState(() {
-                                    // api delete song info
+                                    _deleteSongInfo(songInfo.id);
                                     listSongInfo.removeWhere(
                                         (element) => element == songInfo);
                                     return Navigator.of(context).pop();
@@ -800,6 +931,85 @@ class _AddSongState extends State<AddSong> {
                   ],
                 ),
               ));
+        });
+  }
+
+  void selectDialog(ApiSongInfo songInfo){
+    showDialog(
+        barrierDismissible: false,
+        context: context,
+        builder: (context) {
+          return Opacity(
+            opacity: 0.7,
+            child: Dialog(
+                elevation: 0,
+                backgroundColor: Colors.transparent,
+                child: Container(
+                  height: 200,
+                  decoration: const BoxDecoration(
+                      image: DecorationImage(
+                          image: AssetImage('assets/short_dialog.png'),
+                          fit: BoxFit.fill)),
+                  child: Stack(
+                    children: [
+                      Container(
+                        alignment: Alignment.topRight,
+                        child: TextButton(
+                          onPressed: () {
+                            return Navigator.of(context).pop();
+                          },
+                          child: const Image(
+                            image: AssetImage('assets/exit.png'),
+                            width: 30,
+                            height: 30,
+                          ),
+                        ),
+                      ),
+                      Container(
+                          alignment: Alignment.center,
+                          child: const TextFormat(
+                            text: '곡을 선택하시겠습니까?',
+                            letterSpacing: 2.0,
+                            fontSize: 20.0,
+                            color: Colors.black87,
+                            height: 1.5,
+                          )),
+                      Container(
+                        alignment: Alignment.bottomCenter,
+                        margin: const EdgeInsets.only(bottom: 10.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            TextButton(
+                                onPressed: () {
+                                  setState(() {
+                                    SelectedSongInfo selectedSongInfo = SelectedSongInfo(concertId, songInfo.selectorName, songInfo.singerName, songInfo.songName);
+                                    _postSelectedSongInfo(selectedSongInfo);
+                                    return Navigator.of(context).pop();
+                                  });
+                                },
+                                child: const TextFormat(
+                                  text: '네',
+                                  color: Colors.black87,
+                                  fontSize: 12.0,
+                                )),
+                            TextButton(
+                                onPressed: () {
+                                  return Navigator.of(context).pop();
+                                },
+                                child: const TextFormat(
+                                  text: '아니오',
+                                  color: Colors.black87,
+                                  letterSpacing: 2.0,
+                                  fontSize: 12.0,
+                                )),
+                          ],
+                        ),
+                      )
+                    ],
+                  ),
+                )),
+          );
         });
   }
 
@@ -1350,8 +1560,8 @@ class _AddSongState extends State<AddSong> {
                       problemDialog();  // 가수와 곡 이름을 입력하지 않을 시 입력하라는 팝업창 생성
                     } else {
                       List<int> cloneDifficulty= [...listDifficulty];
-                      SongInfo newSong = SongInfo(
-                          context.read<ConcertId>().id,
+                      SongInfo songInfo = SongInfo(
+                          concertId,
                           selectorNameTextEditController.text,
                           singerNameTextEditController.text,
                           songNameTextEditController.text,
@@ -1359,12 +1569,21 @@ class _AddSongState extends State<AddSong> {
                           linkTextEditController.text,
                           cloneDifficulty,
                           _checkBoxValueScore!);
-                      listSongInfo.add(newSong);
-                      for(int i = 0; i < listDifficulty.length; i++){
-                        listDifficulty[i] = 0;
-                      }
-                      //api add song info
-                      return Navigator.of(context).pop(initTextEdit());
+                      Future<ResultPost> result = _postSongInfo(songInfo);
+                      result.then((data){
+                        listSongInfo.add(ApiSongInfo(data.result, concertId,
+                            selectorNameTextEditController.text,
+                            singerNameTextEditController.text,
+                            songNameTextEditController.text,
+                            remarksTextEditController.text,
+                            linkTextEditController.text,
+                            cloneDifficulty,
+                            _checkBoxValueScore!));
+                        for(int i = 0; i < listDifficulty.length; i++){
+                          listDifficulty[i] = 0;
+                        }
+                        return Navigator.of(context).pop(initTextEdit());
+                      });
                     }
                   });
                 },
@@ -1391,38 +1610,45 @@ class _AddSongState extends State<AddSong> {
               children: [
             Expanded(
               flex: 1,
-              child: ListView.builder(
-                controller: scrollController,
-                scrollDirection: Axis.vertical,
-                itemCount: listSongInfo.length,
-                itemBuilder: (BuildContext context, int index) {
-                  return GestureDetector(
-                    onHorizontalDragUpdate: (detail) {
-                      if (detail.primaryDelta! > 7.0) {
-                        print(detail.primaryDelta);
-                        if (listSongInfo.isNotEmpty) {
-                          SongInfo deleteSongInfo = listSongInfo[index];
-                          deleteDialog(deleteSongInfo);
+              child: FutureBuilder(
+                future: resultSongInfo,
+                builder: (context, snapshot){
+                return ListView.builder(
+                  controller: scrollController,
+                  scrollDirection: Axis.vertical,
+                  itemCount: listSongInfo.length,
+                  itemBuilder: (BuildContext context, int index) {
+                    return GestureDetector(
+                      onHorizontalDragUpdate: (detail) {
+                        if (detail.primaryDelta! > 7.0) {
+                          print(detail.primaryDelta);
+                          if (listSongInfo.isNotEmpty) {
+                            ApiSongInfo deleteSongInfo = listSongInfo[index];
+                            deleteDialog(deleteSongInfo);
+                          }
                         }
-                      }
-                    },
-                    onTap: () {
-                      infoDialog(listSongInfo[index],index);
-                    },
-                    child: Container(
-                      margin: const EdgeInsets.fromLTRB(10, 20, 10, 20),
-                      alignment: Alignment.center,
-                      child: TextFormat(
-                        text: listSongInfo[index].singerName +
-                            " - " +
-                            listSongInfo[index].songName,
-                        color: Colors.black87,
-                        fontSize: 30.0,
-                        letterSpacing: 2,
+                      },
+                      onTap: () {
+                        infoDialog(listSongInfo[index],index);
+                      },
+                      onLongPress: (){
+                        selectDialog(listSongInfo[index]);
+                      },
+                      child: Container(
+                        margin: const EdgeInsets.fromLTRB(10, 20, 10, 20),
+                        alignment: Alignment.center,
+                        child: TextFormat(
+                          text: listSongInfo[index].singerName +
+                              " - " +
+                              listSongInfo[index].songName,
+                          color: Colors.black87,
+                          fontSize: 30.0,
+                          letterSpacing: 2,
+                        ),
                       ),
-                    ),
-                  );
-                },
+                    );
+                  },
+                );},
               ),
             ),
             Container(

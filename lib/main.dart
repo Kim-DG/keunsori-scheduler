@@ -50,25 +50,27 @@ class MainPage extends StatefulWidget {
 
 class _MainPageState extends State<MainPage> {
 
-  late Future<ResultConcert> resultConcert;
+  late Future<ResultGet> resultConcert;
   late ApiConcert firstConcert;
 
-  Future<ResultConcert> getConcert() async{
+  Future<ResultGet> getConcert() async{
     final response = await http
-        .get(Uri.parse('http://10.0.3.2:3000/concerts?limit=2'));
+        .get(Uri.parse('http://10.0.3.2:3000/concerts'));
     if (response.statusCode == 200) {
       // If the server did return a 200 OK response,
       // then parse the JSON.
       print(response.body);
-      return ResultConcert.fromJson(jsonDecode(response.body));
+      return ResultGet.fromJson(jsonDecode(response.body));
     } else {
       // If the server did not return a 200 OK response,
       // then throw an exception.
       throw Exception('Failed to load concert');
     }
   }
+
   @override
   void initState(){
+    super.initState();
     resultConcert = getConcert();
     resultConcert.then((data){
       if(data.result.isNotEmpty) {
