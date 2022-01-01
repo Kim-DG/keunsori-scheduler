@@ -1,44 +1,69 @@
 import 'package:flutter/material.dart';
-
-class Schedule {
-  int concertId;
-  String date;
-  String content;
-
-  Schedule(this.concertId, this.date, this.content);
-}
-
-class ApiSchedule {
-  int id;
-  Schedule schedule;
-
-  ApiSchedule( this.id, this.schedule);
-}
+import 'package:http/http.dart' as http;
 
 class Concert {
-  String date;
-  String concertName;
+  final String date;
+  final String concertName;
 
   Concert(this.date, this.concertName);
 }
 
 class ApiConcert {
-  int id;
-  Concert concert;
+  final int id;
+  final String date;
+  final String concertName;
 
-  ApiConcert(this.id, this.concert);
+  ApiConcert(this.id, this.date, this.concertName);
+
+  ApiConcert.fromJson(Map<String, dynamic> json)
+      : id = json['id'],
+        date = json['date'],
+        concertName = json['concertName'];
+}
+
+class ResultConcert{
+  final int code;
+  final String message;
+  final List<dynamic> result;
+
+  ResultConcert(this.code, this.message, this.result);
+
+  ResultConcert.fromJson(Map<String, dynamic> json)
+      : code = json['code'],
+        message = json['message'],
+        result = json['result'];
+}
+
+class Schedule {
+  final int concertId;
+  final String date;
+  final String content;
+
+  Schedule(this.concertId, this.date, this.content);
+}
+
+class ApiSchedule {
+  final int id;
+  final int concertId;
+  final String date;
+  final String content;
+
+  ApiSchedule( this.id, this.concertId, this.date, this.content);
 }
 
 class SongInfo {
-  String singerName;
-  String songName;
-  String? remarks;
-  String? link;
-  List<int> difficulty;
-  bool score;
-  int voteNum = 0;
+  final int concertId;
+  final String selectorName;
+  final String singerName;
+  final String songName;
+  final String? remarks;
+  final String? link;
+  final List<int> difficulty;
+  final bool score;
 
   SongInfo(
+      this.concertId,
+      this.selectorName,
       this.singerName,
       this.songName,
       this.remarks,
@@ -48,12 +73,47 @@ class SongInfo {
 }
 
 class ApiSongInfo {
-  int id;
-  SongInfo songInfo;
+  final int id;
+  final int concertId;
+  final String selectorName;
+  final String singerName;
+  final String songName;
+  final String? remarks;
+  final String? link;
+  final List<int> difficulty;
+  final bool score;
 
   ApiSongInfo(
       this.id,
-      this.songInfo);
+      this.concertId,
+      this.selectorName,
+      this.singerName,
+      this.songName,
+      this.remarks,
+      this.link,
+      this.difficulty,
+      this.score);
+}
+
+class SelectedSongInfo{
+  final int concertId;
+  final int sequence;
+  final String selectorName;
+  final String singerName;
+  final String songName;
+
+  SelectedSongInfo(this.concertId, this.sequence, this.selectorName, this.singerName, this.songName);
+}
+
+class ApiSelectedSongInfo{
+  final int id;
+  final int concertId;
+  final int sequence;
+  final String selectorName;
+  final String singerName;
+  final String songName;
+
+  ApiSelectedSongInfo(this.id, this.concertId, this.sequence, this.selectorName, this.singerName, this.songName);
 }
 
 
@@ -72,16 +132,6 @@ class ConcertId with ChangeNotifier {
     _id = id;
     _content = content;
     _date = date;
-    notifyListeners();
-  }
-
-  void add() {
-    _id++;
-    notifyListeners();
-  }
-
-  void remove() {
-    _id--;
     notifyListeners();
   }
 }

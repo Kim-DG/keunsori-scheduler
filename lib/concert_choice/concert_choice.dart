@@ -1,10 +1,9 @@
-import 'dart:developer';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:keunsori/data_class/data_class.dart';
 import 'package:keunsori/format/text.dart';
 import 'package:provider/provider.dart';
+import 'package:http/http.dart' as http;
 
 class ConcertChoice extends StatelessWidget {
   const ConcertChoice({Key? key}) : super(key: key);
@@ -106,8 +105,8 @@ class _ConcertListState extends State<ConcertList> {
     super.initState();
 
 
-    ApiConcert ex = ApiConcert(1,Concert(date,"fff"));
-    ApiConcert ex2 = ApiConcert(2,Concert(date,"ddd"));
+    ApiConcert ex = ApiConcert(1,date,"fff");
+    ApiConcert ex2 = ApiConcert(2,date,"ddd");
     listConcert.add(ex);
     listConcert.add(ex2);
   }
@@ -275,8 +274,8 @@ class _ConcertListState extends State<ConcertList> {
           child: TextButton(
             onPressed: () {
               setState(() {
-                listConcert.add(ApiConcert(5,Concert(date,addConcert)));
-                print(listConcert[0].concert.date);
+                listConcert.add(ApiConcert(5,date,addConcert));
+                print(listConcert[0].date);
                 textEditController.text = '';
                 return Navigator.of(context).pop();
               });
@@ -317,7 +316,7 @@ class _ConcertListState extends State<ConcertList> {
                       },
                       onTap: (){  // 클릭 시 해당 공연을 선택하여 정보를 볼 수 있음
                         setState(() {
-                          context.read<ConcertId>().set(listConcert[index].id, listConcert[index].concert.concertName, listConcert[index].concert.date);
+                          context.read<ConcertId>().set(listConcert[index].id, listConcert[index].concertName, listConcert[index].date);
                         });
                         return Navigator.of(context).pop();
                       },
@@ -325,7 +324,7 @@ class _ConcertListState extends State<ConcertList> {
                         margin: const EdgeInsets.all(10.0),
                         alignment: Alignment.center,
                         child: TextFormat(
-                          text: listConcert[index].concert.concertName,
+                          text: listConcert[index].concertName,
                           color: Colors.black87,
                           fontSize: 30.0,
                           letterSpacing: 2,

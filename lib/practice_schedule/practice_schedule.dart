@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:keunsori/format/text.dart';
 import 'package:keunsori/data_class/data_class.dart';
 import 'package:provider/provider.dart';
+import 'package:http/http.dart' as http;
 
 class PracticeSchedule extends StatelessWidget {
   const PracticeSchedule({Key? key}) : super(key: key);
