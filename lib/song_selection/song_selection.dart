@@ -119,7 +119,7 @@ class _AddSongState extends State<AddSong> {
   bool? _checkBoxValueScore = false;
 
   Future<ResultGet> _getSongInfo() async{
-    String url = 'http://10.0.3.2:3000/songs/$concertId';
+    String url = 'https://keunsori-scheduler.herokuapp.com/songs/$concertId';
     final response = await http
         .get(Uri.parse(url));
     if (response.statusCode == 200) {
@@ -134,7 +134,7 @@ class _AddSongState extends State<AddSong> {
   }
 
   Future<ResultPost>_postSongInfo(SongInfo songInfo) async{
-    String url = 'http://10.0.3.2:3000/songs';
+    String url = 'https://keunsori-scheduler.herokuapp.com/songs';
     String json = jsonEncode(songInfo);
     http.Response response = await http.post(Uri.parse(url), headers: <String, String>{
       'Content-Type': 'application/json; charset=UTF-8',
@@ -152,7 +152,7 @@ class _AddSongState extends State<AddSong> {
   }
 
   Future<Result>_deleteSongInfo(int id) async{
-    String url = 'http://10.0.3.2:3000/songs/$id';
+    String url = 'https://keunsori-scheduler.herokuapp.com/songs/$id';
     http.Response response = await http.delete(Uri.parse(url), headers: <String, String>{
       'Content-Type': 'application/json; charset=UTF-8',
     });
@@ -169,7 +169,7 @@ class _AddSongState extends State<AddSong> {
   }
 
   Future<Result>_putSongInfo(int id, SongInfo songInfo) async{
-    String url = 'http://10.0.3.2:3000/songs/$id';
+    String url = 'https://keunsori-scheduler.herokuapp.com/songs/$id';
     String json = jsonEncode(songInfo);
     http.Response response = await http.put(Uri.parse(url), headers: <String, String>{
       'Content-Type': 'application/json; charset=UTF-8',
@@ -187,7 +187,7 @@ class _AddSongState extends State<AddSong> {
   }
 
   Future<ResultPost>_postSelectedSongInfo(SelectedSongInfo songInfo) async{
-    String url = 'http://10.0.3.2:3000/selected-songs';
+    String url = 'https://keunsori-scheduler.herokuapp.com/selected-songs';
     String json = jsonEncode(songInfo);
     http.Response response = await http.post(Uri.parse(url), headers: <String, String>{
       'Content-Type': 'application/json; charset=UTF-8',

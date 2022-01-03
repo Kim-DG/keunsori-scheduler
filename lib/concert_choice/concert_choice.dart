@@ -100,12 +100,13 @@ class _ConcertListState extends State<ConcertList> {
   late Future<ResultGet> resultConcert;
 
   Future<ResultGet> _getConcert() async{
-    String url = 'http://10.0.3.2:3000/concerts';
+    String url = 'https://keunsori-scheduler.herokuapp.com/concerts';
     final response = await http
         .get(Uri.parse(url));
     if (response.statusCode == 200) {
       // If the server did return a 200 OK response,
       // then parse the JSON.
+      print(response.body);
       return ResultGet.fromJson(jsonDecode(response.body));
     } else {
       // If the server did not return a 200 OK response,
@@ -115,7 +116,7 @@ class _ConcertListState extends State<ConcertList> {
   }
 
   Future<ResultPost>_postConcert(Concert concert) async{
-    String url = 'http://10.0.3.2:3000/concerts';
+    String url = 'http://keunsori-scheduler.herokuapp.com/concerts';
     String json = jsonEncode(concert);
     http.Response response = await http.post(Uri.parse(url), headers: <String, String>{
       'Content-Type': 'application/json; charset=UTF-8',
@@ -133,7 +134,7 @@ class _ConcertListState extends State<ConcertList> {
   }
 
   Future<Result>_deleteConcert(int id) async{
-    String url = 'http://10.0.3.2:3000/concerts/$id';
+    String url = 'https://keunsori-scheduler.herokuapp.com/concerts/$id';
     http.Response response = await http.delete(Uri.parse(url), headers: <String, String>{
       'Content-Type': 'application/json; charset=UTF-8',
     });

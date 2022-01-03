@@ -96,7 +96,7 @@ class _SelectedSongsState extends State<SelectedSongs> {
   List<ApiSelectedSongInfo> listSelectedSongInfo = [];
 
   Future<ResultGet> _getSongInfo() async{
-    String url = 'http://10.0.3.2:3000/selected-songs/$concertId';
+    String url = 'https://keunsori-scheduler.herokuapp.com/selected-songs/$concertId';
     final response = await http
         .get(Uri.parse(url));
     if (response.statusCode == 200) {
@@ -112,7 +112,7 @@ class _SelectedSongsState extends State<SelectedSongs> {
   }
 
   Future<Result>_deleteSongInfo(int id) async{
-    String url = 'http://10.0.3.2:3000/selected-songs/$id';
+    String url = 'https://keunsori-scheduler.herokuapp.com/selected-songs/$id';
     http.Response response = await http.delete(Uri.parse(url), headers: <String, String>{
       'Content-Type': 'application/json; charset=UTF-8',
     });
@@ -129,7 +129,7 @@ class _SelectedSongsState extends State<SelectedSongs> {
   }
 
   Future<Result>_putSongInfo(int id, Sequence sequence) async{
-    String url = 'http://10.0.3.2:3000/selected-songs/$id';
+    String url = 'https://keunsori-scheduler.herokuapp.com/selected-songs$id';
     String json = jsonEncode(sequence);
     http.Response response = await http.put(Uri.parse(url), headers: <String, String>{
       'Content-Type': 'application/json; charset=UTF-8',

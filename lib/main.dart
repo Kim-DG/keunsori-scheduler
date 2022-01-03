@@ -53,9 +53,10 @@ class _MainPageState extends State<MainPage> {
   late Future<ResultGet> resultConcert;
   late ApiConcert firstConcert;
 
-  Future<ResultGet> getConcert() async{
+  Future<ResultGet> _getConcert() async{
+    String url = 'https://keunsori-scheduler.herokuapp.com/concerts';
     final response = await http
-        .get(Uri.parse('http://10.0.3.2:3000/concerts'));
+        .get(Uri.parse(url));
     if (response.statusCode == 200) {
       // If the server did return a 200 OK response,
       // then parse the JSON.
@@ -71,7 +72,7 @@ class _MainPageState extends State<MainPage> {
   @override
   void initState(){
     super.initState();
-    resultConcert = getConcert();
+    resultConcert = _getConcert();
     resultConcert.then((data){
       if(data.result.isNotEmpty) {
         firstConcert = ApiConcert.fromJson(data.result[data.result.length-1]);

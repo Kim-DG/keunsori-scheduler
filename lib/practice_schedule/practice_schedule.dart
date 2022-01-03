@@ -122,7 +122,7 @@ class _CalendarState extends State<Calendar> {
   List<String> listOfDays = ["月", "火", "水", "木", "金", "土", "日"];
 
   Future<ResultGet> _getSchedule(int concertId) async{
-    String url = 'http://10.0.3.2:3000/schedules/$concertId';
+    String url = 'https://keunsori-scheduler.herokuapp.com/schedules/$concertId';
     final response = await http
         .get(Uri.parse(url));
     if (response.statusCode == 200) {
@@ -138,7 +138,7 @@ class _CalendarState extends State<Calendar> {
   }
 
   Future<ResultPost> _postSchedule(Schedule schedule) async{
-    String url = 'http://10.0.3.2:3000/schedules';
+    String url = 'https://keunsori-scheduler.herokuapp.com/schedules';
     String json = jsonEncode(schedule);
     http.Response response = await http.post(Uri.parse(url), headers: <String, String>{
       'Content-Type': 'application/json; charset=UTF-8',
@@ -156,7 +156,7 @@ class _CalendarState extends State<Calendar> {
   }
 
   Future<Result>_deleteSchedule(int id) async{
-    String url = 'http://10.0.3.2:3000/schedules/$id';
+    String url = 'https://keunsori-scheduler.herokuapp.com/schedules/$id';
     http.Response response = await http.delete(Uri.parse(url), headers: <String, String>{
       'Content-Type': 'application/json; charset=UTF-8',
     });
