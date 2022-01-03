@@ -4,7 +4,7 @@ import 'package:keunsori/format/button.dart';
 import 'package:keunsori/format/text.dart';
 import 'package:keunsori/concert_choice/concert_choice.dart';
 import 'package:keunsori/song_selection/song_selection.dart';
-import 'package:keunsori/song_sequence.dart';
+import 'package:keunsori/song_sequence/song_sequence.dart';
 import 'package:keunsori/practice_schedule/practice_schedule.dart';
 import 'package:keunsori/data_class/data_class.dart';
 import 'package:provider/provider.dart';

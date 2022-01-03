@@ -129,7 +129,7 @@ class _AddSongState extends State<AddSong> {
     } else {
       // If the server did not return a 200 OK response,
       // then throw an exception.
-      throw Exception('Failed to load concert');
+      throw Exception('Failed to load song');
     }
   }
 
@@ -147,7 +147,7 @@ class _AddSongState extends State<AddSong> {
     } else {
       // If the server did not return a 200 OK response,
       // then throw an exception.
-      throw Exception('Failed to load concert');
+      throw Exception('Failed to load song');
     }
   }
 
@@ -164,7 +164,7 @@ class _AddSongState extends State<AddSong> {
     } else {
       // If the server did not return a 200 OK response,
       // then throw an exception.
-      throw Exception('Failed to load concert');
+      throw Exception('Failed to load song');
     }
   }
 
@@ -182,7 +182,7 @@ class _AddSongState extends State<AddSong> {
     } else {
       // If the server did not return a 200 OK response,
       // then throw an exception.
-      throw Exception('Failed to load concert');
+      throw Exception('Failed to load song');
     }
   }
 
@@ -200,7 +200,7 @@ class _AddSongState extends State<AddSong> {
     } else {
       // If the server did not return a 200 OK response,
       // then throw an exception.
-      throw Exception('Failed to load concert');
+      throw Exception('Failed to load selected-song');
     }
   }
 
@@ -229,7 +229,10 @@ class _AddSongState extends State<AddSong> {
   }
 
   void infoDialog(ApiSongInfo songInfo, int index) {
-    List<int> cloneDifficulty= [...songInfo.difficulty];
+    List<int> difficulty = [];
+    for (var element in songInfo.difficulty.split(', ')) {
+      difficulty.add(int.parse(element));
+    }
     bool cloneScore = songInfo.score;
     showDialog(
         barrierDismissible: false,
@@ -375,15 +378,15 @@ class _AddSongState extends State<AddSong> {
                                     child: TextButton(
                                       onPressed: () {
                                         setDialogState(() {
-                                          if (cloneDifficulty[mapDifficulty['EG1']] == 5) {
-                                            cloneDifficulty[mapDifficulty['EG1']] = 0;
+                                          if (difficulty[mapDifficulty['EG1']] == 5) {
+                                            difficulty[mapDifficulty['EG1']] = 0;
                                           } else {
-                                            cloneDifficulty[mapDifficulty['EG1']]++;
+                                            difficulty[mapDifficulty['EG1']]++;
                                           }
                                         });
                                       },
                                       child: TextFormat(
-                                        text: textDifficulty[cloneDifficulty[mapDifficulty['EG1']]],
+                                        text: textDifficulty[difficulty[mapDifficulty['EG1']]],
                                         fontSize: 12.0,
                                         color: Colors.black87,
                                         letterSpacing: 1.0,
@@ -407,15 +410,15 @@ class _AddSongState extends State<AddSong> {
                                     child: TextButton(
                                       onPressed: () {
                                         setDialogState(() {
-                                          if (cloneDifficulty[mapDifficulty['EG2']] == 5) {
-                                            cloneDifficulty[mapDifficulty['EG2']] = 0;
+                                          if (difficulty[mapDifficulty['EG2']] == 5) {
+                                            difficulty[mapDifficulty['EG2']] = 0;
                                           } else {
-                                            cloneDifficulty[mapDifficulty['EG2']]++;
+                                            difficulty[mapDifficulty['EG2']]++;
                                           }
                                         });
                                       },
                                       child: TextFormat(
-                                        text: textDifficulty[cloneDifficulty[mapDifficulty['EG2']]],
+                                        text: textDifficulty[difficulty[mapDifficulty['EG2']]],
                                         fontSize: 12.0,
                                         color: Colors.black87,
                                         letterSpacing: 1.0,
@@ -439,15 +442,15 @@ class _AddSongState extends State<AddSong> {
                                     child: TextButton(
                                       onPressed: () {
                                         setDialogState(() {
-                                          if (cloneDifficulty[mapDifficulty['AG1']] == 5) {
-                                            cloneDifficulty[mapDifficulty['AG1']] = 0;
+                                          if (difficulty[mapDifficulty['AG1']] == 5) {
+                                            difficulty[mapDifficulty['AG1']] = 0;
                                           } else {
-                                            cloneDifficulty[mapDifficulty['AG1']]++;
+                                            difficulty[mapDifficulty['AG1']]++;
                                           }
                                         });
                                       },
                                       child: TextFormat(
-                                        text: textDifficulty[cloneDifficulty[mapDifficulty['AG1']]],
+                                        text: textDifficulty[difficulty[mapDifficulty['AG1']]],
                                         fontSize: 12.0,
                                         color: Colors.black87,
                                         letterSpacing: 1.0,
@@ -471,15 +474,15 @@ class _AddSongState extends State<AddSong> {
                                     child: TextButton(
                                       onPressed: () {
                                         setDialogState(() {
-                                          if (cloneDifficulty[mapDifficulty['AG2']] == 5) {
-                                            cloneDifficulty[mapDifficulty['AG2']] = 0;
+                                          if (difficulty[mapDifficulty['AG2']] == 5) {
+                                            difficulty[mapDifficulty['AG2']] = 0;
                                           } else {
-                                            cloneDifficulty[mapDifficulty['AG2']]++;
+                                            difficulty[mapDifficulty['AG2']]++;
                                           }
                                         });
                                       },
                                       child: TextFormat(
-                                        text: textDifficulty[cloneDifficulty[mapDifficulty['AG2']]],
+                                        text: textDifficulty[difficulty[mapDifficulty['AG2']]],
                                         fontSize: 12.0,
                                         color: Colors.black87,
                                         letterSpacing: 1.0,
@@ -503,15 +506,15 @@ class _AddSongState extends State<AddSong> {
                                     child: TextButton(
                                       onPressed: () {
                                         setDialogState(() {
-                                          if (cloneDifficulty[mapDifficulty['Bass']] == 5) {
-                                            cloneDifficulty[mapDifficulty['Bass']] = 0;
+                                          if (difficulty[mapDifficulty['Bass']] == 5) {
+                                            difficulty[mapDifficulty['Bass']] = 0;
                                           } else {
-                                            cloneDifficulty[mapDifficulty['Bass']]++;
+                                            difficulty[mapDifficulty['Bass']]++;
                                           }
                                         });
                                       },
                                       child: TextFormat(
-                                        text: textDifficulty[cloneDifficulty[mapDifficulty['Bass']]],
+                                        text: textDifficulty[difficulty[mapDifficulty['Bass']]],
                                         fontSize: 12.0,
                                         color: Colors.black87,
                                         letterSpacing: 1.0,
@@ -540,15 +543,15 @@ class _AddSongState extends State<AddSong> {
                                     child: TextButton(
                                       onPressed: () {
                                         setDialogState(() {
-                                          if (cloneDifficulty[mapDifficulty['Drum']] == 5) {
-                                            cloneDifficulty[mapDifficulty['Drum']] = 0;
+                                          if (difficulty[mapDifficulty['Drum']] == 5) {
+                                            difficulty[mapDifficulty['Drum']] = 0;
                                           } else {
-                                            cloneDifficulty[mapDifficulty['Drum']]++;
+                                            difficulty[mapDifficulty['Drum']]++;
                                           }
                                         });
                                       },
                                       child: TextFormat(
-                                        text: textDifficulty[cloneDifficulty[mapDifficulty['Drum']]],
+                                        text: textDifficulty[difficulty[mapDifficulty['Drum']]],
                                         fontSize: 12.0,
                                         color: Colors.black87,
                                         letterSpacing: 1.0,
@@ -572,15 +575,15 @@ class _AddSongState extends State<AddSong> {
                                     child: TextButton(
                                       onPressed: () {
                                         setDialogState(() {
-                                          if (cloneDifficulty[mapDifficulty['K1']] == 5) {
-                                            cloneDifficulty[mapDifficulty['K1']] = 0;
+                                          if (difficulty[mapDifficulty['K1']] == 5) {
+                                            difficulty[mapDifficulty['K1']] = 0;
                                           } else {
-                                            cloneDifficulty[mapDifficulty['K1']]++;
+                                            difficulty[mapDifficulty['K1']]++;
                                           }
                                         });
                                       },
                                       child: TextFormat(
-                                        text: textDifficulty[cloneDifficulty[mapDifficulty['K1']]],
+                                        text: textDifficulty[difficulty[mapDifficulty['K1']]],
                                         fontSize: 12.0,
                                         color: Colors.black87,
                                         letterSpacing: 1.0,
@@ -604,15 +607,15 @@ class _AddSongState extends State<AddSong> {
                                     child: TextButton(
                                       onPressed: () {
                                         setDialogState(() {
-                                          if (cloneDifficulty[mapDifficulty['K2']] == 5) {
-                                            cloneDifficulty[mapDifficulty['K2']] = 0;
+                                          if (difficulty[mapDifficulty['K2']] == 5) {
+                                            difficulty[mapDifficulty['K2']] = 0;
                                           } else {
-                                            cloneDifficulty[mapDifficulty['K2']]++;
+                                            difficulty[mapDifficulty['K2']]++;
                                           }
                                         });
                                       },
                                       child: TextFormat(
-                                        text: textDifficulty[cloneDifficulty[mapDifficulty['K2']]],
+                                        text: textDifficulty[difficulty[mapDifficulty['K2']]],
                                         fontSize: 12.0,
                                         color: Colors.black87,
                                         letterSpacing: 1.0,
@@ -636,15 +639,15 @@ class _AddSongState extends State<AddSong> {
                                     child: TextButton(
                                       onPressed: () {
                                         setDialogState(() {
-                                          if (cloneDifficulty[mapDifficulty['K3']] == 5) {
-                                            cloneDifficulty[mapDifficulty['K3']] = 0;
+                                          if (difficulty[mapDifficulty['K3']] == 5) {
+                                            difficulty[mapDifficulty['K3']] = 0;
                                           } else {
-                                            cloneDifficulty[mapDifficulty['K3']]++;
+                                            difficulty[mapDifficulty['K3']]++;
                                           }
                                         });
                                       },
                                       child: TextFormat(
-                                        text: textDifficulty[cloneDifficulty[mapDifficulty['K3']]],
+                                        text: textDifficulty[difficulty[mapDifficulty['K3']]],
                                         fontSize: 12.0,
                                         color: Colors.black87,
                                         letterSpacing: 1.0,
@@ -755,16 +758,6 @@ class _AddSongState extends State<AddSong> {
                         child: TextButton(
                           onPressed: () {
                             setState(() {
-                              SongInfo editSongInfo = SongInfo(
-                                  concertId,
-                                  songInfo.selectorName,
-                                  singerNameTextEditController.text,
-                                  songNameTextEditController.text,
-                                  remarksTextEditController.text,
-                                  linkTextEditController.text,
-                                  cloneDifficulty,
-                                  cloneScore);
-                              _putSongInfo(songInfo.id, editSongInfo);
                               String singerName = singerNameTextEditController.text;
                               String songName = songNameTextEditController.text;
                               String remarks = remarksTextEditController.text ;
@@ -783,12 +776,23 @@ class _AddSongState extends State<AddSong> {
                                 link = songInfo.link!;
                               }
 
+                              SongInfo editSongInfo = SongInfo(
+                                  concertId,
+                                  songInfo.selectorName,
+                                  singerName,
+                                  songName,
+                                  remarks,
+                                  link,
+                                  difficulty.toString().substring(1,26),
+                                  cloneScore ? 1 : 0);
+                              _putSongInfo(songInfo.id, editSongInfo);
+
                               listSongInfo[index] = ApiSongInfo(songInfo.id, concertId,songInfo.selectorName,
                                   singerName,
                                   songName,
                                   remarks,
                                   link,
-                                  cloneDifficulty,
+                                  difficulty.toString().substring(1,26),
                                   cloneScore);
                               return Navigator.of(context).pop(initTextEdit());
                             });
@@ -1559,7 +1563,7 @@ class _AddSongState extends State<AddSong> {
                         songNameTextEditController.text == '') {
                       problemDialog();  // 가수와 곡 이름을 입력하지 않을 시 입력하라는 팝업창 생성
                     } else {
-                      List<int> cloneDifficulty= [...listDifficulty];
+                      List<int> difficulty= [...listDifficulty];
                       SongInfo songInfo = SongInfo(
                           concertId,
                           selectorNameTextEditController.text,
@@ -1567,8 +1571,8 @@ class _AddSongState extends State<AddSong> {
                           songNameTextEditController.text,
                           remarksTextEditController.text,
                           linkTextEditController.text,
-                          cloneDifficulty,
-                          _checkBoxValueScore!);
+                          difficulty.toString().substring(1,26),
+                          _checkBoxValueScore!? 1 : 0);
                       Future<ResultPost> result = _postSongInfo(songInfo);
                       result.then((data){
                         listSongInfo.add(ApiSongInfo(data.result, concertId,
@@ -1577,7 +1581,7 @@ class _AddSongState extends State<AddSong> {
                             songNameTextEditController.text,
                             remarksTextEditController.text,
                             linkTextEditController.text,
-                            cloneDifficulty,
+                            difficulty.toString().substring(1,26),
                             _checkBoxValueScore!));
                         for(int i = 0; i < listDifficulty.length; i++){
                           listDifficulty[i] = 0;

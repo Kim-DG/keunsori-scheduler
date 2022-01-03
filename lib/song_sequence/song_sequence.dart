@@ -6,7 +6,7 @@ import 'package:keunsori/format/text.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/src/provider.dart';
 
-import 'data_class/data_class.dart';
+import '../data_class/data_class.dart';
 
 class SongSequence extends StatelessWidget {
   const SongSequence({Key? key}) : super(key: key);
@@ -102,11 +102,12 @@ class _SelectedSongsState extends State<SelectedSongs> {
     if (response.statusCode == 200) {
       // If the server did return a 200 OK response,
       // then parse the JSON.
+      print(response.body);
       return ResultGet.fromJson(jsonDecode(response.body));
     } else {
       // If the server did not return a 200 OK response,
       // then throw an exception.
-      throw Exception('Failed to load concert');
+      throw Exception('Failed to load selected-song');
     }
   }
 
@@ -123,13 +124,13 @@ class _SelectedSongsState extends State<SelectedSongs> {
     } else {
       // If the server did not return a 200 OK response,
       // then throw an exception.
-      throw Exception('Failed to load concert');
+      throw Exception('Failed to load selected-song');
     }
   }
 
-  Future<Result>_putSongInfo() async{
-    String url = 'http://10.0.3.2:3000/selected-songs';
-    String json = jsonEncode(SelectedSongList(listSelectedSongInfo));
+  Future<Result>_putSongInfo(int id, Sequence sequence) async{
+    String url = 'http://10.0.3.2:3000/selected-songs/$id';
+    String json = jsonEncode(sequence);
     http.Response response = await http.put(Uri.parse(url), headers: <String, String>{
       'Content-Type': 'application/json; charset=UTF-8',
     },body: json);
@@ -141,7 +142,7 @@ class _SelectedSongsState extends State<SelectedSongs> {
     } else {
       // If the server did not return a 200 OK response,
       // then throw an exception.
-      throw Exception('Failed to load concert');
+      throw Exception('Failed to load selected-song');
     }
   }
 
@@ -304,7 +305,11 @@ class _SelectedSongsState extends State<SelectedSongs> {
                             }
                             final ApiSelectedSongInfo item = listSelectedSongInfo.removeAt(oldIndex);
                             listSelectedSongInfo.insert(newIndex, item);
-                            _putSongInfo();
+                            for(var element in listSelectedSongInfo){
+                              element.sequence = listSelectedSongInfo.indexOf(element);
+                              Sequence seq = Sequence(element.sequence);
+                              _putSongInfo(element.id, seq);
+                            }
                           });
                         },
                       );},
@@ -316,35 +321,3 @@ class _SelectedSongsState extends State<SelectedSongs> {
     );
   }
 }
-
-/*
- return GestureDetector(
-                            onHorizontalDragUpdate: (detail) {
-                              if (detail.primaryDelta! > 7.0) {
-                                print(detail.primaryDelta);
-                                if (listSelectedSongInfo.isNotEmpty) {
-                                  ApiSelectedSongInfo deleteSongInfo = listSelectedSongInfo[index];
-                                  deleteDialog(deleteSongInfo);
-                                }
-                              }
-                            },
-                            onTap: () {
-                              _putSongInfo();
-                            },
-                            child: Container(
-                              key: Key('index'),
-                              child: Container(
-                                margin: const EdgeInsets.fromLTRB(10, 20, 10, 20),
-                                alignment: Alignment.center,
-                                child: TextFormat(
-                                  text: listSelectedSongInfo[index].singerName +
-                                      " - " +
-                                      listSelectedSongInfo[index].songName,
-                                  color: Colors.black87,
-                                  fontSize: 20.0,
-                                  letterSpacing: 1,
-                                ),
-                              ),
-                            ),
-                          );
- */

@@ -115,8 +115,8 @@ class SongInfo {
   final String songName;
   final String? remarks;
   final String? link;
-  final List<int> difficulty;
-  final bool score;
+  final String difficulty;
+  final int score;
 
   SongInfo(
       this.concertId,
@@ -148,7 +148,7 @@ class ApiSongInfo {
   final String songName;
   final String? remarks;
   final String? link;
-  final List<dynamic> difficulty;
+  final String difficulty;
   final bool score;
 
   ApiSongInfo(
@@ -171,7 +171,7 @@ class ApiSongInfo {
         remarks = json['remarks'],
         link = json['link'],
         difficulty = json['difficulty'],
-        score = json['score'];
+        score = json['score'] == 1;
 }
 
 
@@ -197,35 +197,28 @@ class ApiSelectedSongInfo{
   final String selectorName;
   final String singerName;
   final String songName;
+  int sequence;
 
-  ApiSelectedSongInfo(this.id, this.concertId, this.selectorName, this.singerName, this.songName);
+  ApiSelectedSongInfo(this.id, this.concertId, this.selectorName, this.singerName, this.songName, this.sequence);
 
   ApiSelectedSongInfo.fromJson(Map<String, dynamic> json)
       : id = json['id'],
         concertId = json['concertId'],
         selectorName = json['selectorName'],
         singerName = json['singerName'],
-        songName = json['songName'];
-
-  Map<String, dynamic> toJson() => {
-    'id' : id,
-    'concertId' : concertId,
-    'selectorName' : selectorName,
-    'singerName' : singerName,
-    'songName' : songName
-  };
+        songName = json['songName'],
+        sequence = json['sequence'];
 }
 
-class SelectedSongList{
-  final List<ApiSelectedSongInfo> listSelectedSongInfo;
+class Sequence{
+  final int sequence;
 
-  SelectedSongList(this.listSelectedSongInfo);
+  Sequence(this.sequence);
 
   Map<String, dynamic> toJson() => {
-    'listSelectedSongInfo' : listSelectedSongInfo
+    'sequence': sequence
   };
 }
-
 
 class ConcertId with ChangeNotifier {
   int _id = 0;
