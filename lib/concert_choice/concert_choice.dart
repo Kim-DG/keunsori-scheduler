@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:keunsori/data_class/data_class.dart';
 import 'package:keunsori/format/text.dart';
 import 'package:provider/provider.dart';
+import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:http/http.dart' as http;
 
 class ConcertChoice extends StatelessWidget {
@@ -90,6 +91,8 @@ class ConcertList extends StatefulWidget {
 }
 
 class _ConcertListState extends State<ConcertList> {
+  final RefreshController _refreshController =
+  RefreshController(initialRefresh: false);
   final ScrollController scrollController = ScrollController();
   final textEditController = TextEditingController();
   late DateTime selectedDate;
@@ -155,7 +158,6 @@ class _ConcertListState extends State<ConcertList> {
     super.initState();
     date = DateTime.now().toString().split(' ')[0];
     listConcert.clear();
-
     resultConcert = _getConcert();
     resultConcert.then((data){
       if(data.result.isNotEmpty) {
@@ -172,7 +174,7 @@ class _ConcertListState extends State<ConcertList> {
         context: context,
         builder: (context) {
           return Opacity(
-            opacity: 0.7,
+            opacity: 0.8,
             child: Dialog(
                 elevation: 0,
                 backgroundColor: Colors.transparent,
@@ -325,11 +327,12 @@ class _ConcertListState extends State<ConcertList> {
                 Concert concert = Concert(date,textEditController.text);
                 Future<ResultPost> result = _postConcert(concert);
                 result.then((data){
-                  listConcert.insert(0,ApiConcert(data.result, date, textEditController.text));
+                  setState(() {
+                    listConcert.insert(0,ApiConcert(data.result, date, textEditController.text));
+                  });
                   textEditController.text = '';
                   return Navigator.of(context).pop();
                 });
-
               });
             },
             child: const Image(
@@ -343,81 +346,106 @@ class _ConcertListState extends State<ConcertList> {
     ),
   );
 
+  void _onRefresh() async{
+    // monitor network fetch
+    await Future.delayed(const Duration(milliseconds: 1000));
+    listConcert.clear();
+    resultConcert = _getConcert();
+    setState(() {
+      resultConcert.then((data){
+        if(data.result.isNotEmpty) {
+          for (var element in data.result) {
+            setState(() {
+              listConcert.insert(0,ApiConcert.fromJson(element));
+            });
+          }
+        }
+      });
+    });
+    // if failed,use refreshFailed()
+    _refreshController.refreshCompleted();
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
         child: Scaffold(
       backgroundColor: Colors.transparent,
-          body: Opacity(
-            opacity: 0.7,
-            child: Column(children: [
-                Expanded(
-                  flex: 1,
-                  child: FutureBuilder<ResultGet>(
-                    future: resultConcert,
-                    builder: (context,snapshot) {
-                      if(snapshot.hasData){
-                      return ListView.builder(
-                        controller: scrollController,
-                        scrollDirection: Axis.vertical,
-                        itemCount: listConcert.length,
-                        itemBuilder: (BuildContext context, int index) {
-                          return GestureDetector(
-                            onHorizontalDragUpdate: (detail) {
-                              if(detail.primaryDelta! > 7.0) {
-                                print(detail.primaryDelta);
-                                if(listConcert.isNotEmpty) {
-                                  ApiConcert deleteConcert = listConcert[index];
-                                  deleteDialog(deleteConcert);
+          body: SmartRefresher(
+            header: const ClassicHeader(),
+            controller: _refreshController,
+            onRefresh: _onRefresh,
+            child: Opacity(
+              opacity: 0.7,
+              child: Column(children: [
+                  Expanded(
+                    flex: 1,
+                    child: FutureBuilder<ResultGet>(
+                      future: resultConcert,
+                      builder: (context,snapshot) {
+                        if(snapshot.hasData){
+                        return ListView.builder(
+                          controller: scrollController,
+                          scrollDirection: Axis.vertical,
+                          itemCount: listConcert.length,
+                          itemBuilder: (BuildContext context, int index) {
+                            return GestureDetector(
+                              onHorizontalDragUpdate: (detail) {
+                                if(detail.primaryDelta! > 7.0) {
+                                  print(detail.primaryDelta);
+                                  if(listConcert.isNotEmpty) {
+                                    ApiConcert deleteConcert = listConcert[index];
+                                    deleteDialog(deleteConcert);
+                                  }
                                 }
-                              }
-                            },
-                            onTap: (){  // 클릭 시 해당 공연을 선택하여 정보를 볼 수 있음
-                              setState(() {
-                                context.read<ConcertId>().set(listConcert[index].id, listConcert[index].concertName, listConcert[index].date);
-                              });
-                              return Navigator.of(context).pop();
-                            },
-                            child: Container(
-                              margin: const EdgeInsets.all(10.0),
-                              alignment: Alignment.center,
-                              child: TextFormat(
-                                text: listConcert[index].concertName,
-                                color: Colors.black87,
-                                fontSize: 30.0,
-                                letterSpacing: 2,
+                              },
+                              onTap: (){  // 클릭 시 해당 공연을 선택하여 정보를 볼 수 있음
+                                setState(() {
+                                  context.read<ConcertId>().set(listConcert[index].id, listConcert[index].concertName, listConcert[index].date);
+                                });
+                                return Navigator.of(context).pop();
+                              },
+                              child: Container(
+                                margin: const EdgeInsets.all(10.0),
+                                alignment: Alignment.center,
+                                child: TextFormat(
+                                  text: listConcert[index].concertName,
+                                  color: Colors.black87,
+                                  fontSize: 30.0,
+                                  letterSpacing: 2,
+                                ),
                               ),
-                            ),
-                          );
-                        },
-                      );
-                      } else if (snapshot.hasError){
-                        return const TextFormat(
-                          text: "오류가 발생했습니다!",
-                          color: Colors.black87,
-                          fontSize: 15.0,
-                          letterSpacing: 2,
+                            );
+                          },
                         );
+                        } else if (snapshot.hasError){
+                          return const TextFormat(
+                            text: "오류가 발생했습니다!",
+                            color: Colors.black87,
+                            fontSize: 15.0,
+                            letterSpacing: 2,
+                          );
+                        }
+                        return Container();
                       }
-                      return Container();
-                    }
-                  ),
-                ),
-                Container(
-                  alignment: Alignment.bottomRight,
-                  margin: const EdgeInsets.only(bottom: 5.0),
-                  child: TextButton(
-                    onPressed: () {
-                      addConcertDialog();
-                    },
-                    child: const Image(
-                      image: AssetImage('assets/plus.png'),
-                      width: 45,
-                      height: 45,
                     ),
                   ),
-                ),
-              ]),
+                  Container(
+                    alignment: Alignment.bottomRight,
+                    margin: const EdgeInsets.only(bottom: 5.0),
+                    child: TextButton(
+                      onPressed: () {
+                        addConcertDialog();
+                      },
+                      child: const Image(
+                        image: AssetImage('assets/plus.png'),
+                        width: 45,
+                        height: 45,
+                      ),
+                    ),
+                  ),
+                ]),
+            ),
           ),
           ),
     );

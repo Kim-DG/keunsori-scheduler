@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:keunsori/format/text.dart';
 import 'package:keunsori/data_class/data_class.dart';
 import 'package:provider/provider.dart';
+import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:http/http.dart' as http;
 
 class PracticeSchedule extends StatelessWidget {
@@ -14,76 +15,71 @@ class PracticeSchedule extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(
-          children: [
-            const SizedBox(
-              width: double.infinity,
-              height: double.infinity,
-              child: Image(
-                image: AssetImage('assets/bg.gif'),
-                fit: BoxFit.cover,
-              ),
+        children: [
+          const SizedBox(
+            width: double.infinity,
+            height: double.infinity,
+            child: Image(
+              image: AssetImage('assets/bg.gif'),
+              fit: BoxFit.cover,
             ),
-            Container(
-              margin: const EdgeInsets.all(25.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Stack(
-                    children: [
-                      const Opacity(
-                        opacity: 0.7,
-                        child: Image(
-                          image: AssetImage('assets/uppage.png'),
-                          fit: BoxFit.fill,
-                          width: double.maxFinite,
+          ),
+          Container(
+            margin: const EdgeInsets.all(25.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Stack(
+                  children: [
+                    const Opacity(
+                      opacity: 0.7,
+                      child: Image(
+                        image: AssetImage('assets/uppage.png'),
+                        fit: BoxFit.fill,
+                        width: double.maxFinite,
+                      ),
+                    ),
+                    Positioned(
+                      bottom: 10,
+                      top: 10,
+                      left: 10,
+                      right: 10,
+                      child: Container(
+                        alignment: Alignment.center,
+                        child: const TextFormat(
+                          text: '연습일정',
+                          color: Colors.black87,
+                          fontSize: 25.0,
                         ),
                       ),
-                      Positioned(
+                    ),
+                  ],
+                ),
+                Stack(
+                  children: const [
+                    Opacity(
+                        opacity: 0.7,
+                        child: Image(
+                          width: double.infinity,
+                          image: AssetImage('assets/downpage.png'),
+                          fit: BoxFit.fill,
+                        )),
+                    Positioned(
                         bottom: 10,
                         top: 10,
                         left: 10,
                         right: 10,
-                        child: Container(
-                          alignment: Alignment.center,
-                          child: const TextFormat(
-                            text: '연습일정',
-                            color: Colors.black87,
-                            fontSize: 25.0,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  Stack(
-                    children: const [
-                      Opacity(
-                          opacity: 0.7,
-                          child: Image(
-                            width: double.infinity,
-                            image: AssetImage('assets/downpage.png'),
-                            fit: BoxFit.fill,
-                          )),
-                      Positioned(
-                          bottom: 10,
-                          top: 10,
-                          left: 10,
-                          right: 10,
-                          child: Calendar()),
-                    ],
-                  ),
-                ],
-              ),
+                        child: Calendar()),
+                  ],
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
+      ),
     );
   }
 }
-
-
-
-
-
 
 class Calendar extends StatefulWidget {
   const Calendar({Key? key}) : super(key: key);
@@ -93,6 +89,8 @@ class Calendar extends StatefulWidget {
 }
 
 class _CalendarState extends State<Calendar> {
+  final RefreshController _refreshController =
+  RefreshController(initialRefresh: false);
   late final DateTime start;
   final ScrollController scrollController =
       ScrollController(); //To Track Scroll of ListView
@@ -121,10 +119,10 @@ class _CalendarState extends State<Calendar> {
   ];
   List<String> listOfDays = ["月", "火", "水", "木", "金", "土", "日"];
 
-  Future<ResultGet> _getSchedule(int concertId) async{
-    String url = 'https://keunsori-scheduler.herokuapp.com/schedules/$concertId';
-    final response = await http
-        .get(Uri.parse(url));
+  Future<ResultGet> _getSchedule(int concertId) async {
+    String url =
+        'https://keunsori-scheduler.herokuapp.com/schedules/$concertId';
+    final response = await http.get(Uri.parse(url));
     if (response.statusCode == 200) {
       // If the server did return a 200 OK response,
       // then parse the JSON.
@@ -137,12 +135,14 @@ class _CalendarState extends State<Calendar> {
     }
   }
 
-  Future<ResultPost> _postSchedule(Schedule schedule) async{
+  Future<ResultPost> _postSchedule(Schedule schedule) async {
     String url = 'https://keunsori-scheduler.herokuapp.com/schedules';
     String json = jsonEncode(schedule);
-    http.Response response = await http.post(Uri.parse(url), headers: <String, String>{
-      'Content-Type': 'application/json; charset=UTF-8',
-    }, body: json);
+    http.Response response = await http.post(Uri.parse(url),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: json);
     if (response.statusCode == 201) {
       // If the server did return a 200 OK response,
       // then parse the JSON.
@@ -155,9 +155,10 @@ class _CalendarState extends State<Calendar> {
     }
   }
 
-  Future<Result>_deleteSchedule(int id) async{
+  Future<Result> _deleteSchedule(int id) async {
     String url = 'https://keunsori-scheduler.herokuapp.com/schedules/$id';
-    http.Response response = await http.delete(Uri.parse(url), headers: <String, String>{
+    http.Response response =
+        await http.delete(Uri.parse(url), headers: <String, String>{
       'Content-Type': 'application/json; charset=UTF-8',
     });
     if (response.statusCode == 200) {
@@ -176,12 +177,14 @@ class _CalendarState extends State<Calendar> {
   void initState() {
     super.initState();
     List<String> listDate = context.read<ConcertId>().date.split('-');
-    start = DateTime(int.parse(listDate[0]),int.parse(listDate[1]),int.parse(listDate[2]));
+    start = DateTime(
+        int.parse(listDate[0]), int.parse(listDate[1]), int.parse(listDate[2]));
     tapDate = start.toString().split(' ')[0];
     concertId = context.read<ConcertId>().id;
+    listSchedule.clear();
     resultSchedule = _getSchedule(concertId);
-    resultSchedule.then((data){
-      if(data.result.isNotEmpty) {
+    resultSchedule.then((data) {
+      if (data.result.isNotEmpty) {
         for (var element in data.result) {
           listSchedule.add(ApiSchedule.fromJson(element));
         }
@@ -195,7 +198,7 @@ class _CalendarState extends State<Calendar> {
         context: context,
         builder: (context) {
           return Opacity(
-            opacity: 0.7,
+            opacity: 0.8,
             child: Dialog(
                 elevation: 0,
                 backgroundColor: Colors.transparent,
@@ -239,10 +242,10 @@ class _CalendarState extends State<Calendar> {
                                 onPressed: () {
                                   setState(() {
                                     _deleteSchedule(schedule.id);
-                                    listSchedule.removeWhere((element) =>
-                                    element == schedule);
-                                    filterSchedule.removeWhere((
-                                        element) => element == schedule);
+                                    listSchedule.removeWhere(
+                                        (element) => element == schedule);
+                                    filterSchedule.removeWhere(
+                                        (element) => element == schedule);
                                     return Navigator.of(context).pop();
                                   });
                                 },
@@ -340,8 +343,7 @@ class _CalendarState extends State<Calendar> {
                           color: Colors.black87, fontSize: 18, fontFamily: 'A'),
                       cursorColor: Colors.black54,
                       onChanged: (text) {
-                        setState(() {
-                        });
+                        setState(() {});
                       },
                     ),
                   )
@@ -354,15 +356,18 @@ class _CalendarState extends State<Calendar> {
               child: TextButton(
                 onPressed: () {
                   setState(() {
-                    Schedule schedule = Schedule(concertId,tapDate,textEditController.text);
+                    Schedule schedule =
+                        Schedule(concertId, tapDate, textEditController.text);
                     Future<ResultPost> result = _postSchedule(schedule);
-                    result.then((data){
-                      listSchedule.add(ApiSchedule(data.result,concertId, tapDate, textEditController.text));
+                    result.then((data) {
+                      setState(() {
+                        listSchedule.add(ApiSchedule(data.result, concertId,
+                            tapDate, textEditController.text));
+                        filterSchedule = listSchedule
+                            .where((element) => element.date == tapDate)
+                            .toList();
+                      });
                       textEditController.text = '';
-                      print(listSchedule);
-                      filterSchedule = listSchedule
-                          .where((element) => element.date == tapDate)
-                          .toList();
                       return Navigator.of(context).pop();
                     });
                   });
@@ -377,6 +382,24 @@ class _CalendarState extends State<Calendar> {
           ],
         ),
       );
+
+  void _onRefresh() async{
+    // monitor network fetch
+    await Future.delayed(const Duration(milliseconds: 1000));
+    listSchedule.clear();
+    resultSchedule = _getSchedule(concertId);
+    resultSchedule.then((data) {
+      if (data.result.isNotEmpty) {
+        for (var element in data.result) {
+          setState(() {
+            listSchedule.add(ApiSchedule.fromJson(element));
+          });
+        }
+      }
+    });
+    // if failed,use refreshFailed()
+    _refreshController.refreshCompleted();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -406,7 +429,9 @@ class _CalendarState extends State<Calendar> {
                             .split(' ')[0];
                         currentDateSelectedIndex = index;
                         filterSchedule = listSchedule
-                            .where((element) => element.date == tapDate && element.concertId == concertId)
+                            .where((element) =>
+                                element.date == tapDate &&
+                                element.concertId == concertId)
                             .toList();
                         print(tapDate);
                         print(filterSchedule);
@@ -445,7 +470,8 @@ class _CalendarState extends State<Calendar> {
                             TextFormat(
                               text: listOfMonths[start
                                               .add(Duration(days: index))
-                                              .month - 1]
+                                              .month -
+                                          1]
                                       .toString() +
                                   start
                                       .add(Duration(days: index))
@@ -470,70 +496,76 @@ class _CalendarState extends State<Calendar> {
           ),
           Expanded(
               flex: 1,
-              child: Opacity(
-                opacity: 0.7,
-                child: Column(children: [
-                  Expanded(
-                    flex: 1,
-                    child: FutureBuilder(
-                      future: resultSchedule,
-                      builder: (context, snapshot){
-    if(snapshot.hasData){
-                      return ListView.builder(
-                        controller: scrollController,
-                        scrollDirection: Axis.vertical,
-                        itemCount: filterSchedule.length,
-                        itemBuilder: (BuildContext context, int index) {
-                          return GestureDetector(
-                            onHorizontalDragUpdate: (detail) {
-                              if(detail.primaryDelta! > 7.0) {
-                                print(detail.primaryDelta);
-                                if(filterSchedule.isNotEmpty) {
-                                  ApiSchedule deleteSchedule = filterSchedule[index];
-                                  deleteDialog(deleteSchedule);
-                                }
-                              }
-                            },
-                            child: Container(
-                              margin: const EdgeInsets.all(10.0),
-                              alignment: Alignment.center,
-                              child: TextFormat(
-                                text: filterSchedule[index].content,
-                                color: Colors.black87,
-                                fontSize: 24.0,
-                                letterSpacing: 2,
-                              ),
-                            ),
-                          );
+              child: SmartRefresher(
+                header: const ClassicHeader(),
+                controller: _refreshController,
+                onRefresh: _onRefresh,
+                child: Opacity(
+                  opacity: 0.7,
+                  child: Column(children: [
+                    Expanded(
+                      flex: 1,
+                      child: FutureBuilder(
+                        future: resultSchedule,
+                        builder: (context, snapshot) {
+                          if (snapshot.hasData) {
+                            return ListView.builder(
+                              controller: scrollController,
+                              scrollDirection: Axis.vertical,
+                              itemCount: filterSchedule.length,
+                              itemBuilder: (BuildContext context, int index) {
+                                return GestureDetector(
+                                  onHorizontalDragUpdate: (detail) {
+                                    if (detail.primaryDelta! > 7.0) {
+                                      print(detail.primaryDelta);
+                                      if (filterSchedule.isNotEmpty) {
+                                        ApiSchedule deleteSchedule =
+                                            filterSchedule[index];
+                                        deleteDialog(deleteSchedule);
+                                      }
+                                    }
+                                  },
+                                  child: Container(
+                                    margin: const EdgeInsets.all(10.0),
+                                    alignment: Alignment.center,
+                                    child: TextFormat(
+                                      text: filterSchedule[index].content,
+                                      color: Colors.black87,
+                                      fontSize: 24.0,
+                                      letterSpacing: 2,
+                                    ),
+                                  ),
+                                );
+                              },
+                            );
+                          } else if (snapshot.hasError) {
+                            return const TextFormat(
+                              text: "오류가 발생했습니다!",
+                              color: Colors.black87,
+                              fontSize: 15.0,
+                              letterSpacing: 2,
+                            );
+                          }
+                          return Container();
                         },
-                      );
-    } else if (snapshot.hasError){
-      return const TextFormat(
-        text: "오류가 발생했습니다!",
-        color: Colors.black87,
-        fontSize: 15.0,
-        letterSpacing: 2,
-      );
-    }
-    return Container();
-                      },
-                    ),
-                  ),
-                  Container(
-                    alignment: Alignment.bottomRight,
-                    margin: const EdgeInsets.only(bottom: 5.0),
-                    child: TextButton(
-                      onPressed: () {
-                        addScheduleDialog();
-                      },
-                      child: const Image(
-                        image: AssetImage('assets/plus.png'),
-                        width: 45,
-                        height: 45,
                       ),
                     ),
-                  ),
-                ]),
+                    Container(
+                      alignment: Alignment.bottomRight,
+                      margin: const EdgeInsets.only(bottom: 5.0),
+                      child: TextButton(
+                        onPressed: () {
+                          addScheduleDialog();
+                        },
+                        child: const Image(
+                          image: AssetImage('assets/plus.png'),
+                          width: 45,
+                          height: 45,
+                        ),
+                      ),
+                    ),
+                  ]),
+                ),
               )),
         ],
       ),
@@ -546,4 +578,3 @@ class _CalendarState extends State<Calendar> {
     super.dispose();
   }
 }
-

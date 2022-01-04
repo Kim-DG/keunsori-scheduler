@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:keunsori/format/text.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/src/provider.dart';
-
+import 'package:pull_to_refresh/pull_to_refresh.dart';
 import '../data_class/data_class.dart';
 
 class SongSequence extends StatelessWidget {
@@ -89,6 +89,8 @@ class SelectedSongs extends StatefulWidget {
 }
 
 class _SelectedSongsState extends State<SelectedSongs> {
+  final RefreshController _refreshController =
+  RefreshController(initialRefresh: false);
   ScrollController scrollController = ScrollController();
   late int concertId;
   late Future<ResultGet> resultSongInfo;
@@ -129,7 +131,7 @@ class _SelectedSongsState extends State<SelectedSongs> {
   }
 
   Future<Result>_putSongInfo(int id, Sequence sequence) async{
-    String url = 'https://keunsori-scheduler.herokuapp.com/selected-songs$id';
+    String url = 'https://keunsori-scheduler.herokuapp.com/selected-songs/$id';
     String json = jsonEncode(sequence);
     http.Response response = await http.put(Uri.parse(url), headers: <String, String>{
       'Content-Type': 'application/json; charset=UTF-8',
@@ -150,8 +152,8 @@ class _SelectedSongsState extends State<SelectedSongs> {
   void initState() {
     super.initState();
     concertId = context.read<ConcertId>().id;
+    listSelectedSongInfo.clear();
     resultSongInfo = _getSongInfo();
-
     resultSongInfo.then((data){
       if(data.result.isNotEmpty) {
         for (var element in data.result) {
@@ -167,7 +169,7 @@ class _SelectedSongsState extends State<SelectedSongs> {
         context: context,
         builder: (context) {
           return Opacity(
-            opacity: 0.7,
+            opacity: 0.8,
             child: Dialog(
                 elevation: 0,
                 backgroundColor: Colors.transparent,
@@ -241,81 +243,104 @@ class _SelectedSongsState extends State<SelectedSongs> {
         });
   }
 
+  void _onRefresh() async{
+    // monitor network fetch
+    await Future.delayed(const Duration(milliseconds: 1000));
+    listSelectedSongInfo.clear();
+    resultSongInfo = _getSongInfo();
+    resultSongInfo.then((data){
+      if(data.result.isNotEmpty) {
+        for (var element in data.result) {
+          setState(() {
+            listSelectedSongInfo.add(ApiSelectedSongInfo.fromJson(element));
+          });
+        }
+      }
+    });
+    // if failed,use refreshFailed()
+    _refreshController.refreshCompleted();
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        body: Opacity(
-          opacity: 0.7,
-          child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  flex: 1,
-                  child: FutureBuilder(
-                    future: resultSongInfo,
-                    builder: (context, snapshot){
-                      return ReorderableListView(
-                        buildDefaultDragHandles: false,
-                        children: <Widget>[
-                          for (int index = 0; index < listSelectedSongInfo.length; index++)
-                            Container(
-                              key: Key('$index'),
-                              child: GestureDetector(
-                                onHorizontalDragUpdate: (detail) {
-                                  if (detail.primaryDelta! > 7.0) {
-                                    print(detail.primaryDelta);
-                                    if (listSelectedSongInfo.isNotEmpty) {
-                                      ApiSelectedSongInfo deleteSongInfo = listSelectedSongInfo[index];
-                                      deleteDialog(deleteSongInfo);
+        body: SmartRefresher(
+          header: const ClassicHeader(),
+          controller: _refreshController,
+          onRefresh: _onRefresh,
+          child: Opacity(
+            opacity: 0.7,
+            child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    flex: 1,
+                    child: FutureBuilder(
+                      future: resultSongInfo,
+                      builder: (context, snapshot){
+                        return ReorderableListView(
+                          buildDefaultDragHandles: false,
+                          children: <Widget>[
+                            for (int index = 0; index < listSelectedSongInfo.length; index++)
+                              Container(
+                                key: Key('$index'),
+                                child: GestureDetector(
+                                  onHorizontalDragUpdate: (detail) {
+                                    if (detail.primaryDelta! > 7.0) {
+                                      print(detail.primaryDelta);
+                                      if (listSelectedSongInfo.isNotEmpty) {
+                                        ApiSelectedSongInfo deleteSongInfo = listSelectedSongInfo[index];
+                                        deleteDialog(deleteSongInfo);
+                                      }
                                     }
-                                  }
-                                },
-                                child: Row(
-                                  children: <Widget>[
-                                    Container(
-                                      width: 64,
-                                      height: 64,
-                                      padding: const EdgeInsets.all(8),
-                                      child: ReorderableDragStartListener(
-                                        index: index,
-                                        child: const Image(
-                                          image: AssetImage('assets/handle.png'),
+                                  },
+                                  child: Row(
+                                    children: <Widget>[
+                                      Container(
+                                        width: 64,
+                                        height: 64,
+                                        padding: const EdgeInsets.all(8),
+                                        child: ReorderableDragStartListener(
+                                          index: index,
+                                          child: const Image(
+                                            image: AssetImage('assets/handle.png'),
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                    TextFormat(
-                                      text: listSelectedSongInfo[index].singerName +
-                                          " - " +
-                                          listSelectedSongInfo[index].songName,
-                                      color: Colors.black87,
-                                      fontSize: 20.0,
-                                      letterSpacing: 1,
-                                    ),
-                                  ],
+                                      TextFormat(
+                                        text: listSelectedSongInfo[index].singerName +
+                                            " - " +
+                                            listSelectedSongInfo[index].songName,
+                                        color: Colors.black87,
+                                        fontSize: 20.0,
+                                        letterSpacing: 1,
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
-                            ),
-                        ],
-                        onReorder: (int oldIndex, int newIndex) {
-                          setState(() {
-                            if (oldIndex < newIndex) {
-                              newIndex -= 1;
-                            }
-                            final ApiSelectedSongInfo item = listSelectedSongInfo.removeAt(oldIndex);
-                            listSelectedSongInfo.insert(newIndex, item);
-                            for(var element in listSelectedSongInfo){
-                              element.sequence = listSelectedSongInfo.indexOf(element);
-                              Sequence seq = Sequence(element.sequence);
-                              _putSongInfo(element.id, seq);
-                            }
-                          });
-                        },
-                      );},
+                          ],
+                          onReorder: (int oldIndex, int newIndex) {
+                            setState(() {
+                              if (oldIndex < newIndex) {
+                                newIndex -= 1;
+                              }
+                              final ApiSelectedSongInfo item = listSelectedSongInfo.removeAt(oldIndex);
+                              listSelectedSongInfo.insert(newIndex, item);
+                              for(var element in listSelectedSongInfo){
+                                element.sequence = listSelectedSongInfo.indexOf(element);
+                                Sequence seq = Sequence(element.sequence);
+                                _putSongInfo(element.id, seq);
+                              }
+                            });
+                          },
+                        );},
+                    ),
                   ),
-                ),
-              ]),
+                ]),
+          ),
         ),
       ),
     );
